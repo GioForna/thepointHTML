@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>The Point - Exploration Demo</title>
+    <style>
+        /* Nascondi scrollbar SOLO su html e body (non sui contenuti interni) */
+        html {
+            overflow: hidden;
+            overflow-x: hidden;
+        }
+
+        body {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        body::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        body {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+            background: #0A0A0A;
+            color: #FFFFFF;
+            padding: 40px 20px;
+        }
+
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-title h2 {
+            font-family: 'Times New Roman', serif;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .section-title p {
+            color: #71717A;
+            font-size: 16px;
+        }
+        
+        .language-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .language-buttons button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        /* Main Layout */
+        .exploration-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+            min-height: 600px;
+        }
+
+        /* Left Side - Briefing Cards */
+        .briefing-sidebar {
+            background: #111111;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #2A2A2A;
+        }
+
+        .sidebar-header {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #71717A;
+            margin-bottom: 20px;
+        }
+
+        .briefing-card {
+            background: #1A1A1A;
+            border: 2px solid #2A2A2A;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .briefing-card:hover {
+            border-color: #3B82F6;
+            transform: translateX(4px);
+        }
+
+        .briefing-card.active {
+            border-color: #3B82F6;
+            background: #1E293B;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .card-title {
+            font-family: 'Times New Roman', serif;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+
+        .card-meta {
+            font-size: 11px;
+            color: #71717A;
+            font-family: 'SF Mono', monospace;
+        }
+
+        /* Right Side - Detail View */
+        .detail-panel {
+            background: #111111;
+            border-radius: 12px;
+            border: 1px solid #2A2A2A;
+            padding: 40px;
+            overflow-y: auto;
+            max-height: 80vh;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .detail-panel.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .detail-panel.empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transform: none;
+        }
+
+        .empty-state-content {
+            text-align: center;
+            color: #71717A;
+        }
+
+        .empty-state-content .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Detail Content */
+        .detail-header {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #2A2A2A;
+        }
+
+        .detail-title {
+            font-family: 'Times New Roman', serif;
+            font-size: 28px;
+            font-weight: bold;
+            line-height: 1.3;
+            margin-bottom: 12px;
+        }
+
+        .detail-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            font-family: 'SF Mono', monospace;
+            color: #71717A;
+        }
+
+        .detail-section {
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .detail-section:nth-child(2) { animation-delay: 0.1s; }
+        .detail-section:nth-child(3) { animation-delay: 0.2s; }
+        .detail-section:nth-child(4) { animation-delay: 0.3s; }
+        .detail-section:nth-child(5) { animation-delay: 0.4s; }
+        .detail-section:nth-child(6) { animation-delay: 0.5s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #71717A;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .detail-text {
+                color: #D4D4D8;
+                line-height: 1.7;
+                font-size: 15px;
+            }
+
+            /* Font ridotto per mobile */
+            @media (max-width: 768px) {
+                .detail-text {
+                    font-size: 14px; /* Ridotto di 1px */
+                }
+            }
+
+        /* Controversy Box */
+        .controversy-box {
+            background: rgba(220, 38, 38, 0.05);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 12px;
+        }
+
+        .controversy-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #DC2626;
+            font-weight: 600;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .perspectives-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        /* Mobile controversy layout */
+        .perspectives-mobile {
+            display: none;
+        }
+
+        .perspective-mobile {
+            background: #1A1A1A;
+            padding: 20px;
+            border-radius: 8px;
+            min-width: 280px;
+            margin-right: 16px;
+        }
+
+        .perspective-mobile:last-child {
+            margin-right: 0;
+        }
+
+        .perspective-mobile .perspective-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 16px;
+            color: #FFFFFF;
+        }
+
+        .perspective-mobile .perspective-sources {
+            font-size: 13px;
+            color: #71717A;
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+
+        .perspective-mobile .perspective-arg {
+            font-size: 14px;
+            color: #D4D4D8;
+            line-height: 1.6;
+        }
+
+        .perspectives-mobile-container {
+            display: flex;
+            overflow-x: auto;
+            padding: 12px 0;
+            scrollbar-width: thin;
+            scrollbar-color: #3B82F6 #1A1A1A;
+        }
+
+        .perspectives-mobile-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .perspectives-mobile-container::-webkit-scrollbar-track {
+            background: #1A1A1A;
+            border-radius: 3px;
+        }
+
+        .perspectives-mobile-container::-webkit-scrollbar-thumb {
+            background: #3B82F6;
+            border-radius: 3px;
+        }
+
+        .perspective {
+            background: #1A1A1A;
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .perspective-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .perspective-sources {
+            font-size: 12px;
+            color: #71717A;
+            margin-bottom: 8px;
+        }
+
+        .perspective-arg {
+            font-size: 13px;
+            color: #A1A1AA;
+            line-height: 1.5;
+        }
+
+        .vs-divider {
+            color: #71717A;
+            font-size: 20px;
+            font-weight: 700;
+            align-self: center;
+        }
+
+        /* Key Takeaways */
+        .takeaways-list {
+            list-style: none;
+            margin-top: 12px;
+        }
+
+        .takeaways-list li {
+            padding-left: 24px;
+            position: relative;
+            margin-bottom: 10px;
+            color: #D4D4D8;
+            line-height: 1.6;
+        }
+
+        .takeaways-list li:before {
+            content: "•";
+            position: absolute;
+            left: 8px;
+            color: #3B82F6;
+            font-weight: bold;
+        }
+
+        /* Sources Slider */
+        .sources-slider {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 12px 0;
+            margin-top: 12px;
+            scrollbar-width: thin;
+            scrollbar-color: #3B82F6 #1A1A1A;
+        }
+
+        .sources-slider::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .sources-slider::-webkit-scrollbar-track {
+            background: #1A1A1A;
+            border-radius: 3px;
+        }
+
+        .sources-slider::-webkit-scrollbar-thumb {
+            background: #3B82F6;
+            border-radius: 3px;
+        }
+
+        .source-card {
+            min-width: 200px;
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .source-card:hover {
+            border-color: #3B82F6;
+            transform: translateY(-2px);
+        }
+
+        .source-logo {
+            width: 32px;
+            height: 32px;
+            background: #3B82F6;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .source-name {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .source-type {
+            font-size: 11px;
+            color: #71717A;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* AI Assistant */
+        .ai-assistant {
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 12px;
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .ai-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .ai-title {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .ai-input-container {
+            position: relative;
+        }
+
+        .ai-input {
+            width: 100%;
+            background: #1A1A1A;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 14px 16px;
+            color: #71717A;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .ai-input:focus {
+            outline: none;
+            border-color: #334155;
+            box-shadow: none;
+        }
+
+        .ai-suggestions {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .ai-suggestion {
+            background: #1A1A1A;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #A1A1AA;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ai-suggestion:hover {
+            border-color: #3B82F6;
+            color: #FFFFFF;
+            background: #1E293B;
+        }
+
+        /* AI Response */
+        .ai-response {
+            margin-top: 16px;
+            padding: 20px;
+            background: #1A1A1A;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .ai-response.visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .ai-response-content {
+            color: #D4D4D8;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .ai-response-content h3 {
+            color: #FFFFFF;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 16px 0 8px 0;
+        }
+
+        .ai-response-content h3:first-child {
+            margin-top: 0;
+        }
+
+        .ai-response-content p {
+            margin-bottom: 12px;
+        }
+
+        .ai-response-content a {
+            color: #3B82F6;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .ai-response-content a:hover {
+            border-bottom-color: #3B82F6;
+        }
+
+        .ai-response-content ul {
+            margin: 8px 0 12px 20px;
+        }
+
+        .ai-response-content li {
+            margin-bottom: 6px;
+        }
+
+        .ai-response-content strong {
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+
+        /* Responsive - Ottimizzato per Framer */
+        
+        /* Tablet (Framer breakpoint) */
+        @media (max-width: 1024px) {
+            .exploration-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .briefing-sidebar {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 12px;
+                padding: 20px;
+            }
+
+            .sidebar-header {
+                grid-column: 1 / -1;
+            }
+
+            .detail-panel {
+                padding: 30px 24px;
+            }
+        }
+
+        /* Mobile (Framer breakpoint) */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 16px;
+            }
+
+            .demo-container {
+                max-width: 100%;
+            }
+
+            .section-title h2 {
+                font-size: 28px;
+            }
+            
+            .section-title p {
+                font-size: 14px;
+            }
+            
+            .language-buttons {
+                margin-top: 16px;
+            }
+            
+            .language-buttons button {
+                padding: 10px 20px;
+                font-size: 14px;
+                min-width: 60px;
+            }
+
+            .exploration-layout {
+                gap: 16px;
+            }
+
+            .briefing-sidebar {
+                padding: 12px;
+                grid-template-columns: 1fr;
+                max-height: none; /* Rimuove altezza fissa */
+                overflow: visible; /* Rimuove scroll */
+                position: relative;
+            }
+
+
+            /* Nasconde le card oltre la seconda su mobile */
+            .briefing-card:nth-child(n+4) {
+                display: none;
+            }
+
+            .briefing-card {
+                padding: 10px;
+                margin-bottom: 6px; /* Spazio ridotto tra le card */
+            }
+
+            .card-title {
+                font-size: 12px;
+                line-height: 1.3;
+            }
+
+            .card-meta {
+                font-size: 10px;
+            }
+
+            .perspectives-grid {
+                display: none;
+            }
+
+            .perspectives-mobile {
+                display: block;
+            }
+
+            .vs-divider {
+                display: none;
+            }
+
+            .detail-panel {
+                padding: 20px 16px;
+                max-height: 70vh;
+            }
+
+            .detail-title {
+                font-size: 22px;
+                line-height: 1.2;
+            }
+
+            .detail-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .controversy-box {
+                padding: 16px;
+            }
+
+            .ai-assistant {
+                padding: 20px;
+            }
+
+            .sources-slider {
+                gap: 8px;
+            }
+
+            .source-card {
+                min-width: 180px;
+                padding: 12px;
+            }
+        }
+
+        /* Mobile Small (Framer breakpoint) */
+        @media (max-width: 480px) {
+            body {
+                padding: 16px 12px;
+            }
+
+            .section-title h2 {
+                font-size: 24px;
+            }
+
+            .briefing-sidebar {
+                padding: 10px;
+                max-height: none; /* Rimuove altezza fissa anche su mobile small */
+                overflow: visible; /* Rimuove scroll */
+            }
+
+            .briefing-card {
+                padding: 8px;
+                margin-bottom: 5px;
+            }
+
+            .card-title {
+                font-size: 11px;
+            }
+
+            .card-meta {
+                font-size: 9px;
+            }
+
+            .detail-panel {
+                padding: 16px 12px;
+            }
+
+            .detail-title {
+                font-size: 20px;
+            }
+
+            .controversy-box {
+                padding: 12px;
+            }
+
+            .ai-assistant {
+                padding: 16px;
+            }
+
+            .source-card {
+                min-width: 160px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="section-title">
+            <p style="font-family: 'Times New Roman', Times, serif; color: white;">Clicca una notizia per vedere come si espande</p>
+            <div class="language-buttons">
+                <button onclick="switchLanguage('it')" style="background: #3B82F6; color: white; border: none;">IT</button>
+                <button onclick="switchLanguage('en')" style="background: #1A1A1A; color: #71717A; border: 1px solid #334155;">EN</button>
+            </div>
+        </div>
+
+        <div class="exploration-layout">
+            <!-- Left Sidebar - Briefing Cards -->
+            <div class="briefing-sidebar">
+                <div class="sidebar-header">Il Tuo Briefing</div>
+                
+                <div class="briefing-card" data-news="1">
+                    <div class="card-title" data-translate="news1.title">EU AI Act entra in vigore — Aziende tech corrono per conformarsi entro agosto 2026</div>
+                    <div class="card-meta" data-translate="news1.meta">⏱️ 2h fa • 🎯 4 fonti ufficiali</div>
+                </div>
+
+                <div class="briefing-card active" data-news="2">
+                    <div class="card-title" data-translate="news2.title">BRICS Summit in Kazan — Modi, Putin e Xi discutono de-dollarizzazione</div>
+                    <div class="card-meta" data-translate="news2.meta">⏱️ 2024 • ⚡ 2 prospettive</div>
+                </div>
+
+                <div class="briefing-card" data-news="3">
+                    <div class="card-title" data-translate="news3.title">NVIDIA Blackwell arriva — 25x più efficiente ma ritardi di produzione preoccupano clienti</div>
+                    <div class="card-meta" data-translate="news3.meta">⏱️ 6h fa • ⚡ 2 prospettive</div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Detail View -->
+            <div class="detail-panel visible" id="detailPanel">
+                <div class="detail-header">
+                    <div class="detail-title">BRICS Summit in Kazan — Modi, Putin e Xi discutono de-dollarizzazione e nuovo ordine multipolare</div>
+                    <div class="detail-meta">
+                        <span>8 fonti primarie</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="section-label">📄 Resoconto Dettagliato</div>
+                    <div class="detail-text">
+                        Il 16° vertice BRICS si è tenuto a Kazan, Russia, dal 22 al 24 ottobre 2024, segnando il primo summit dopo l'espansione del blocco che ora include Egitto, Etiopia, Iran ed Emirati Arabi Uniti oltre ai membri fondatori (Brasile, Russia, India, Cina, Sudafrica). Hanno partecipato oltre 30 delegazioni e 22 capi di stato o di governo, tra cui il primo ministro indiano Narendra Modi, il presidente russo Vladimir Putin e il leader cinese Xi Jinping.
+                        <br><br>
+                        Focus principale del summit: riduzione della dipendenza dal dollaro USA attraverso l'uso di valute locali nelle transazioni tra paesi BRICS, sviluppo di sistemi di pagamento alternativi e creazione di infrastrutture finanziarie al di fuori del controllo occidentale. Il dollaro attualmente domina il 90% delle transazioni valutarie globali, e i leader BRICS hanno sottolineato la necessità di un sistema finanziario multipolare meno vulnerabile all'influenza di una singola valuta.
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="section-label">⚡ Controversie & Prospettive Multiple</div>
+                    <div class="controversy-box">
+                        <div class="controversy-header">
+                            <span>⚡</span>
+                            <span>2 POSIZIONI CONTRASTANTI</span>
+                        </div>
+                        <div class="perspectives-grid">
+                            <div class="perspective">
+                                <div class="perspective-title">Favorevoli (Russia, Cina)</div>
+                                <div class="perspective-sources">Putin (Kazan), Dichiarazione BRICS 2024</div>
+                                <div class="perspective-arg">
+                                    "È essenziale costruire meccanismi finanziari alternativi affidabili e liberi da dettatura" (Putin). "Accogliamo l'uso di valute locali nelle transazioni tra paesi BRICS" (Dichiarazione Kazan). Argomento: gli USA usano il dollaro come arma attraverso sanzioni e SWIFT.
+                                </div>
+                            </div>
+                            <div class="vs-divider">vs</div>
+                            <div class="perspective">
+                                <div class="perspective-title">Scettici (Analisti occidentali)</div>
+                                <div class="perspective-sources">Bloomberg, CFR, Voice of America</div>
+                                <div class="perspective-arg">
+                                    "BRICS de-dollarization dream remains a fantasy" (Bloomberg). "Ambizioni di creare valuta propria affrontano sfide potenzialmente insormontabili" (Council on Foreign Relations). "Analisti esprimono seri dubbi sul successo del sistema di pagamento BRICS" (VOA).
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Mobile controversy layout -->
+                        <div class="perspectives-mobile">
+                            <div class="perspectives-mobile-container">
+                                <div class="perspective-mobile">
+                                    <div class="perspective-title">Favorevoli (Russia, Cina)</div>
+                                    <div class="perspective-sources">Putin (Kazan), Dichiarazione BRICS 2024</div>
+                                    <div class="perspective-arg">
+                                        "È essenziale costruire meccanismi finanziari alternativi affidabili e liberi da dettatura" (Putin). "Accogliamo l'uso di valute locali nelle transazioni tra paesi BRICS" (Dichiarazione Kazan). Argomento: gli USA usano il dollaro come arma attraverso sanzioni e SWIFT.
+                                    </div>
+                                </div>
+                                <div class="perspective-mobile">
+                                    <div class="perspective-title">Scettici (Analisti occidentali)</div>
+                                    <div class="perspective-sources">Bloomberg, CFR, Voice of America</div>
+                                    <div class="perspective-arg">
+                                        "BRICS de-dollarization dream remains a fantasy" (Bloomberg). "Ambizioni di creare valuta propria affrontano sfide potenzialmente insormontabili" (Council on Foreign Relations). "Analisti esprimono seri dubbi sul successo del sistema di pagamento BRICS" (VOA).
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="section-label">🎯 Key Takeaways</div>
+                    <ul class="takeaways-list">
+                        <li>Primo summit BRICS dopo l'espansione: ora include 9 membri (Egitto, Etiopia, Iran, UAE aggiunti a gennaio 2024)</li>
+                        <li>Oltre 30 paesi hanno espresso interesse a collaborare o unirsi, tra cui Arabia Saudita e Turchia</li>
+                        <li>Dichiarazione finale incoraggia "uso di valute locali nelle transazioni tra paesi BRICS" ma nessuna valuta comune proposta</li>
+                        <li>Discusso sviluppo di sistemi di pagamento alternativi a SWIFT per evitare sanzioni occidentali</li>
+                        <li>Analisti scettici: progetti restano vaghi, manca infrastruttura credibile per sfidare davvero il dollaro nel breve termine</li>
+                    </ul>
+                </div>
+
+                <div class="detail-section">
+                    <div class="section-label">📚 Fonti Primarie & Report</div>
+                    <div class="sources-slider">
+                        <div class="source-card">
+                            <div class="source-logo">BL</div>
+                            <div class="source-name">Bloomberg</div>
+                            <div class="source-type">Analysis - Skeptical</div>
+                        </div>
+                        <div class="source-card">
+                            <div class="source-logo">RT</div>
+                            <div class="source-name">Russia Today</div>
+                            <div class="source-type">Pro-BRICS</div>
+                        </div>
+                        <div class="source-card">
+                            <div class="source-logo">CFR</div>
+                            <div class="source-name">Council on FR</div>
+                            <div class="source-type">Skeptical</div>
+                        </div>
+                        <div class="source-card">
+                            <div class="source-logo">VOA</div>
+                            <div class="source-name">Voice of America</div>
+                            <div class="source-type">Skeptical</div>
+                        </div>
+                        <div class="source-card">
+                            <div class="source-logo">FP</div>
+                            <div class="source-name">Foreign Policy</div>
+                            <div class="source-type">Neutral-Cautious</div>
+                        </div>
+                        <div class="source-card">
+                            <div class="source-logo">AC</div>
+                            <div class="source-name">Atlantic Council</div>
+                            <div class="source-type">Pro-significance</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="section-label">🤖 Interroga con l'AI</div>
+                    <div class="ai-assistant">
+                        <div class="ai-header">
+                            <div class="ai-icon">✨</div>
+                            <div class="ai-title">Chiedi all'Assistente AI</div>
+                        </div>
+                        <div class="ai-input-container">
+                            <input 
+                                type="text" 
+                                class="ai-input" 
+                                placeholder="Seleziona una domanda qui sotto per vedere la risposta AI"
+                                readonly
+                            >
+                        </div>
+                        <div class="ai-suggestions">
+                            <div class="ai-suggestion" data-question="1">Quali sono i punti deboli della posizione BRICS?</div>
+                            <div class="ai-suggestion" data-question="2">Confronta le evidenze delle due prospettive</div>
+                            <div class="ai-suggestion" data-question="3">Come si è evoluta questa storia negli ultimi 12 mesi?</div>
+                        </div>
+                        <div class="ai-response" id="aiResponse">
+                            <div class="ai-response-content" id="aiResponseContent">
+                                <!-- Contenuto della risposta verrà inserito qui dinamicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Language system
+        let currentLanguage = 'it';
+        
+        // Auto-detect language on page load
+        function detectLanguage() {
+            const userLang = navigator.language.slice(0, 2);
+            const currentPath = window.location.pathname;
+            
+            // Check if we're on the English version
+            if (currentPath.includes('/en') || currentPath.includes('/english')) {
+                return 'en';
+            }
+            
+            // Auto-detect based on browser language
+            if (userLang === 'en') {
+                return 'en';
+            }
+            
+            // Default to Italian
+            return 'it';
+        }
+        
+        // Initialize language detection
+        currentLanguage = detectLanguage();
+        
+        // Translations
+        const translations = {
+            it: {
+                ui: {
+                    "Clicca una notizia per vedere come si espande": "Clicca una notizia per vedere come si espande",
+                    "Il Tuo Briefing": "Il Tuo Briefing",
+                    "Chiedi all'Assistente AI": "Chiedi all'Assistente AI",
+                    "Seleziona una domanda qui sotto per vedere la risposta AI": "Seleziona una domanda qui sotto per vedere la risposta AI",
+                    "📄 Resoconto Dettagliato": "📄 Resoconto Dettagliato",
+                    "⚡ Controversie & Prospettive Multiple": "⚡ Controversie & Prospettive Multiple",
+                    "🎯 Key Takeaways": "🎯 Key Takeaways",
+                    "📚 Fonti Primarie & Report": "📚 Fonti Primarie & Report",
+                    "🤖 Interroga con l'AI": "🤖 Interroga con l'AI"
+                },
+                news: {
+                    "news1.title": "EU AI Act entra in vigore — Aziende tech corrono per conformarsi entro agosto 2026",
+                    "news1.meta": "⏱️ 2h fa • 🎯 4 fonti ufficiali",
+                    "news1.detail": `L'AI Act dell'Unione Europea è entrato ufficialmente in vigore il 1° agosto 2024, diventando la prima legislazione completa al mondo per regolamentare l'intelligenza artificiale nei settori pubblico e privato. La normativa adotta un approccio basato sul rischio, classificando i sistemi AI in quattro categorie: rischio inaccettabile (vietati), alto rischio (regolamentati), rischio limitato (obblighi di trasparenza) e rischio minimo (nessun obbligo).<br><br>Timeline di implementazione scaglionata: le regole su AI proibite entreranno in vigore a febbraio 2025, mentre i fornitori di sistemi AI ad alto rischio dovranno conformarsi entro agosto 2026. Per i modelli di AI general-purpose (GPAI), inclusi quelli già sul mercato prima di agosto 2025, le regole sono operative da agosto 2025. Le multe per violazioni vanno da €15 milioni o 3% del fatturato globale annuo, fino a €35 milioni o 7% per violazioni gravi come l'uso di tecniche manipolative vietate.`,
+                    "news2.title": "BRICS Summit in Kazan — Modi, Putin e Xi discutono de-dollarizzazione",
+                    "news2.meta": "⏱️ 2024 • ⚡ 2 prospettive",
+                    "news2.detail": `Il 16° vertice BRICS si è tenuto a Kazan, Russia, dal 22 al 24 ottobre 2024, segnando il primo summit dopo l'espansione del blocco che ora include Egitto, Etiopia, Iran ed Emirati Arabi Uniti oltre ai membri fondatori (Brasile, Russia, India, Cina, Sudafrica). Hanno partecipato oltre 30 delegazioni e 22 capi di stato o di governo, tra cui il primo ministro indiano Narendra Modi, il presidente russo Vladimir Putin e il leader cinese Xi Jinping.<br><br>Focus principale del summit: riduzione della dipendenza dal dollaro USA attraverso l'uso di valute locali nelle transazioni tra paesi BRICS, sviluppo di sistemi di pagamento alternativi e creazione di infrastrutture finanziarie al di fuori del controllo occidentale. Il dollaro attualmente domina il 90% delle transazioni valutarie globali, e i leader BRICS hanno sottolineato la necessità di un sistema finanziario multipolare meno vulnerabile all'influenza di una singola valuta.`,
+                    "news3.title": "NVIDIA Blackwell arriva — 25x più efficiente ma ritardi di produzione preoccupano clienti",
+                    "news3.meta": "⏱️ 6h fa • ⚡ 2 prospettive",
+                    "news3.detail": `NVIDIA ha annunciato ufficialmente l'architettura Blackwell GPU a marzo 2024, con la piattaforma GB200 che promette performance rivoluzionarie per l'AI generativa. Secondo NVIDIA, il GB200 superchip offre fino a 25x meno consumo energetico e costi rispetto alla generazione precedente (Hopper H100) per l'inferenza di modelli AI con trilioni di parametri. Le performance: 20 petaFLOPS su chip singolo, supporto per modelli fino a 10 trilioni di parametri.<br><br>Tuttavia, la produzione ha affrontato sfide significative. Ad agosto 2024, NVIDIA ha confermato ritardi di 3+ mesi a causa di problemi nel design della mask che hanno impattato la resa dei chip. Ulteriori complicazioni: problemi di power delivery, surriscaldamento, complessità dei sistemi di raffreddamento a liquido, e transizione TSMC da CoWoS-S a CoWoS-L. Meta ha pubblicamente dichiarato di non aspettarsi consegne significative nel 2024. NVIDIA prevede ora ramping produttivo significativo nel 2H 2025.`
+                },
+                controversy: {
+                    "brics.title": "2 Posizioni Contrastanti",
+                    "brics.favorable.title": "Favorevoli (Russia, Cina)",
+                    "brics.favorable.sources": "Putin (Kazan), Dichiarazione BRICS 2024",
+                    "brics.favorable.argument": "\"È essenziale costruire meccanismi finanziari alternativi affidabili e liberi da dettatura\" (Putin). \"Accogliamo l'uso di valute locali nelle transazioni tra paesi BRICS\" (Dichiarazione Kazan). Argomento: gli USA usano il dollaro come arma attraverso sanzioni e SWIFT.",
+                    "brics.skeptical.title": "Scettici (Analisti occidentali)",
+                    "brics.skeptical.sources": "Bloomberg, CFR, Voice of America",
+                    "brics.skeptical.argument": "\"BRICS de-dollarization dream remains a fantasy\" (Bloomberg). \"Ambizioni di creare valuta propria affrontano sfide potenzialmente insormontabili\" (Council on Foreign Relations). \"Analisti esprimono seri dubbi sul successo del sistema di pagamento BRICS\" (VOA).",
+                    "nvidia.title": "Performance vs Produzione",
+                    "nvidia.optimistic.title": "NVIDIA e Ottimisti",
+                    "nvidia.optimistic.sources": "NVIDIA official, investitori long-term",
+                    "nvidia.optimistic.argument": "Performance rivoluzionarie che giustificano l'attesa. 25x efficienza energetica, 30x performance inferenza su Hopper. Ritardi sono normali per architetture così avanzate. Demand è altissimo (multi-miliardi di ordini). Revenue Blackwell previsto significativo in Q4 2024 nonostante ritardi.",
+                    "nvidia.concerned.title": "Analisti Preoccupati",
+                    "nvidia.concerned.sources": "SemiAnalysis, The Information, clienti hyperscaler",
+                    "nvidia.concerned.argument": "Problemi di design più profondi del previsto: power delivery, overheating, complessità board. Supply sarà 'considerably lower' in Q4 2024 e H1 2025. Meta non si aspetta consegne nel 2024. Clienti potrebbero considerare alternative (AMD MI300). Ritardi costano opportunità in mercato AI in rapida crescita."
+                },
+                aiResponses: {
+                    "news1.q1": `<h3>Quali sono i sistemi AI considerati 'ad alto rischio'?</h3>
+                        <p>L'AI Act identifica i sistemi ad alto rischio attraverso due percorsi principali definiti nell'<a href="https://artificialintelligenceact.eu/article/6/" target="_blank">Articolo 6</a>.</p>
+                        
+                        <p><strong>Primo percorso: AI come componente di sicurezza (Articolo 6(1))</strong></p>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">Un sistema AI è considerato ad alto rischio se soddisfa due condizioni cumulative</a>:</p>
+                        <ol>
+                            <li>È utilizzato come componente di sicurezza di un prodotto (o è esso stesso un prodotto) coperto dalla legislazione UE di armonizzazione elencata nell'Annex I dell'AI Act</li>
+                            <li>La stessa legislazione richiede che il prodotto sia sottoposto a valutazione di conformità da terze parti prima di essere immesso sul mercato UE</li>
+                        </ol>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">L'Annex I contiene oltre 30 direttive e regolamenti, inclusa la legislazione sulla sicurezza di giocattoli, veicoli, aviazione civile, ascensori, apparecchiature radio e dispositivi medici</a>.</p>
+                        
+                        <p><strong>Secondo percorso: Categorie specifiche (Articolo 6(2) e Annex III)</strong></p>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">L'AI Act contiene nell'Annex III un elenco di sistemi AI che devono essere considerati ad alto rischio</a>. <a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">L'elenco attualmente include sistemi AI in otto diverse categorie</a>:</p>
+                        <ol>
+                            <li><a href="https://artificialintelligenceact.eu/annex/3/" target="_blank"><strong>Biometria</strong></a>: sistemi di identificazione biometrica remota (esclusi quelli per semplice verifica identitaria), sistemi di categorizzazione biometrica basati su attributi sensibili, sistemi di riconoscimento delle emozioni</li>
+                            <li><a href="https://artificialintelligenceact.eu/annex/3/" target="_blank"><strong>Infrastrutture critiche</strong></a>: sistemi utilizzati come componenti di sicurezza nella gestione di infrastrutture digitali critiche, traffico stradale, forniture energetiche</li>
+                            <li><a href="https://www.aoshearman.com/en/insights/ao-shearman-on-tech/zooming-in-on-ai-10-eu-ai-act-what-are-the-obligations-for-high-risk-ai-systems" target="_blank"><strong>Istruzione e formazione professionale</strong></a>: sistemi per valutazione degli studenti in istituzioni educative</li>
+                            <li><a href="https://www.aoshearman.com/en/insights/ao-shearman-on-tech/zooming-in-on-ai-10-eu-ai-act-what-are-the-obligations-for-high-risk-ai-systems" target="_blank"><strong>Impiego e gestione dei lavoratori</strong></a>: sistemi per reclutamento, valutazione delle performance, allocazione dei compiti</li>
+                            <li><a href="https://www.trail-ml.com/blog/eu-ai-act-how-risk-is-classified" target="_blank"><strong>Accesso a servizi essenziali</strong></a>: sistemi per valutare l'idoneità a prestazioni e servizi pubblici</li>
+                            <li><a href="https://artificialintelligenceact.eu/annex/3/" target="_blank"><strong>Forze dell'ordine</strong></a>: sistemi per valutare il rischio di reato da parte di persone fisiche, profilazione nel corso di indagini penali</li>
+                            <li><a href="https://www.trail-ml.com/blog/eu-ai-act-how-risk-is-classified" target="_blank"><strong>Gestione della migrazione, asilo e controllo delle frontiere</strong></a></li>
+                            <li><a href="https://www.trail-ml.com/blog/eu-ai-act-how-risk-is-classified" target="_blank"><strong>Amministrazione della giustizia</strong></a>: sistemi per assistere autorità giudiziarie</li>
+                        </ol>
+                        
+                        <p><strong>Eccezioni documentate</strong></p>
+                        <p><a href="https://artificialintelligenceact.eu/article/6/" target="_blank">I sistemi elencati nell'Annex III non sono considerati ad alto rischio se non comportano un rischio significativo di danno alla salute, sicurezza o diritti fondamentali</a>. <a href="https://artificialintelligenceact.eu/article/6/" target="_blank">Questa eccezione si applica quando il sistema</a>:</p>
+                        <ul>
+                            <li>È destinato a svolgere un compito procedurale ristretto</li>
+                            <li>È destinato a migliorare il risultato di un'attività umana già completata</li>
+                            <li>È destinato a rilevare pattern decisionali senza sostituire la valutazione umana</li>
+                            <li>È destinato a svolgere un compito preparatorio a una valutazione</li>
+                        </ul>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrih-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">Se un fornitore ritiene che il proprio sistema AI non sia ad alto rischio, deve documentare la propria valutazione prima di venderlo o utilizzarlo</a>. <a href="https://artificialintelligenceact.eu/article/6/" target="_blank">La Commissione Europea fornirà linee guida entro febbraio 2026 con esempi pratici di casi d'uso di sistemi AI ad alto rischio e non ad alto rischio</a>.</p>`,
+                    "news1.q2": `<h3>Come si applica alle aziende non europee?</h3>
+                        <p>L'AI Act ha portata extraterritoriale esplicita, definita nell'<a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">Articolo 2</a>.</p>
+                        
+                        <p><strong>Principio di applicazione extraterritoriale</strong></p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">L'AI Act si applica a fornitori che immettono sul mercato o mettono in servizio sistemi AI o modelli GPAI nell'UE, indipendentemente dal fatto che tali fornitori siano stabiliti o ubicati nell'UE o in un paese terzo</a>.</p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">L'Articolo 2(1)(c) include specificamente fornitori e deployer di sistemi AI che hanno sede o sono ubicati in paesi terzi, quando l'output prodotto dal sistema AI viene utilizzato nell'UE</a>. <a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">Questa giurisdizione basata sull'output è un aspetto chiave della portata extraterritoriale dell'AI Act</a>.</p>
+                        
+                        <p><strong>Quando si applica alle aziende non-UE</strong></p>
+                        <p><a href="https://www.holisticai.com/blog/implications-of-the-eu-ai-act-for-non-eu-leadership-teams" target="_blank">L'AI Act governa il mercato UE, non le aziende fisicamente basate nell'UE</a>. <a href="https://www.holisticai.com/blog/implications-of-the-eu-ai-act-for-non-eu-leadership-teams" target="_blank">Le aziende non-UE che offrono prodotti e servizi AI all'interno del mercato UE rientrano nell'ambito dell'AI Act</a>.</p>
+                        <p><a href="https://www.dlapiper.com/en/insights/publications/2024/02/extra-territorial-application-of-the-ai-act-how-will-it-impact-australian-organisations" target="_blank">L'AI Act si applica alle organizzazioni fuori dall'UE quando</a>:</p>
+                        <ul>
+                            <li>Tali organizzazioni immettono prodotti AI sul mercato o mettono in servizio tali prodotti nell'UE</li>
+                            <li>Rendono disponibili nell'UE gli output prodotti da un prodotto AI</li>
+                        </ul>
+                        <p><a href="https://www.afriwise.com/blog/extraterritorial-application-of-the-eu-ai-act-what-non-eu-companies-should-know" target="_blank">Il principio è radicato nella "ubicazione del mercato": se l'output o l'uso di un sistema AI influisce su persone nell'UE, l'AI Act può applicarsi</a>.</p>
+                        
+                        <p><strong>Esempi pratici documentati</strong></p>
+                        <p><a href="https://www.afriwise.com/blog/extraterritorial-application-of-the-eu-ai-act-what-non-eu-companies-should-know" target="_blank">Casi in cui l'AI Act si applica a aziende non-UE</a>:</p>
+                        <ul>
+                            <li>Un'azienda sudafricana che sviluppa uno strumento AI di reclutamento e lo commercializza a datori di lavoro UE deve conformarsi ai requisiti dell'AI Act per sistemi ad alto rischio, anche se tutto lo sviluppo e l'hosting avvengono fuori dall'UE</li>
+                            <li>Un fornitore mauriziano che offre un servizio di riconoscimento facciale basato su cloud accessibile a clienti UE deve conformarsi perché il servizio è utilizzato nell'UE</li>
+                            <li>Un produttore keniota che vende dispositivi smart home con AI integrata a consumatori UE deve garantire la conformità perché i dispositivi sono immessi sul mercato UE</li>
+                        </ul>
+                        <p><a href="https://www.afriwise.com/blog/extraterritorial-application-of-the-eu-ai-act-what-non-eu-companies-should-know" target="_blank">Caso in cui l'AI Act non si applica</a>: se un'azienda sudafricana importa uno strumento AI da un'azienda francese e lo distribuisce nel mercato sudafricano, non deve conformarsi all'AI Act.</p>
+                        
+                        <p><strong>Requisito del rappresentante autorizzato</strong></p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">I fornitori di sistemi AI ad alto rischio stabiliti in paesi terzi devono nominare un rappresentante autorizzato nell'UE prima di immettere i loro sistemi sul mercato UE</a>.</p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">Un "rappresentante autorizzato" è definito come una persona fisica o giuridica ubicata o stabilita nell'UE che ha ricevuto e accettato un mandato scritto da un fornitore per svolgere per suo conto gli obblighi e le procedure stabilite dall'AI Act</a>.</p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">L'AI Act distingue tra rappresentanti autorizzati per sistemi AI ad alto rischio (Articolo 22) e quelli per modelli GPAI (Articolo 54)</a>.</p>
+                        
+                        <p><strong>Obblighi e sanzioni</strong></p>
+                        <p><a href="https://www.holisticai.com/blog/implications-of-the-eu-ai-act-for-non-eu-leadership-teams" target="_blank">Gli obblighi per aziende dentro e fuori dall'UE sono gli stessi</a>, con l'AI Act che adotta un approccio basato sul rischio per determinare gli obblighi associati a ciascun sistema.</p>
+                        <p><a href="https://www.dlapiper.com/en/insights/publications/2024/02/extra-territorial-application-of-the-ai-act-how-will-it-impact-australian-organisations" target="_blank">Le sanzioni previste includono</a>:</p>
+                        <ul>
+                            <li>Per violazioni relative a sistemi proibiti o a rischio inaccettabile: il maggiore tra 7% del fatturato globale o €35 milioni</li>
+                            <li>Per violazioni di altri obblighi: il maggiore tra 3% del fatturato globale o €15 milioni</li>
+                            <li>Per fornitura di informazioni errate alle autorità: il maggiore tra 1% del fatturato globale o €7,5 milioni</li>
+                        </ul>`,
+                    "news2.q1": `<h3>Quali sono i punti deboli della posizione BRICS?</h3>
+                        <p><strong>1. Divergenza documentata di priorità tra membri</strong></p>
+                        <p>Analisti identificano una divisione: <a href="https://www.thegatewaypundit.com/2024/10/multipolarity-brics-summit-kicks-tomorrow-kazan-36/" target="_blank">"India e Brasile vedono BRICS principalmente come forum economico, mentre Russia e Cina lo considerano più come gruppo geopolitico"</a>.</p>
+                        <p><a href="https://www.csmonitor.com/World/Europe/2024/1024/brics-russia-vladimir-putin-ukraine-war-us-dollar" target="_blank">Christian Science Monitor</a> riporta: "Paesi come Russia e Iran necessitano di un'alternativa; per loro usare valute nazionali è una soluzione tattica, non strategica. Altri paesi come il Brasile commerciano nel gruppo principalmente con la Cina, e non hanno tale bisogno immediato".</p>
+                        <p>Tensioni bilaterali: <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">Jim O'Neill</a>, che ha coniato il termine BRIC nel 2001, ha definito l'idea di una valuta comune "ridicola", citando la relazione tumultuosa tra India e Cina. <a href="https://www.csmonitor.com/World/Europe/2024/1024/brics-russia-vladimir-putin-ukraine-war-us-dollar" target="_blank">India e Cina hanno finalizzato un accordo sul confine disputato solo durante il summit di Kazan</a>.</p>
+                        
+                        <p><strong>2. Assenza di infrastruttura tecnica operativa</strong></p>
+                        <p><a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Eva Seiwert del Mercator Institute for China Studies</a> afferma: "C'è ancora molta strada prima che BRICS possa lanciare un sistema di pagamento trattabile come alternativa seria a SWIFT".</p>
+                        <p>La dichiarazione di Kazan è stata valutata come <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">"vaga anche sulla versione più mite chiamata BRICS Cross-Border Payments Initiative (BCBPI)"</a>.</p>
+                        <p>Problemi tecnici identificati: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Gopal Tripathy, responsabile Treasury presso Jana Small Finance Bank</a>: "Come gestire le fluttuazioni valutarie se viene stabilito un sistema di pagamento alternativo? Potrebbero usare il USD come valuta di riferimento. In tal caso, l'intero scopo di allontanarsi dal dollaro è perso".</p>
+                        <p>Limitazioni operative: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">"Aziende in India, Cina, Sud Africa e Brasile potrebbero trovare difficile effettuare e ricevere pagamenti con partner commerciali in paesi fuori dal club BRICS"</a>.</p>
+                        
+                        <p><strong>3. Requisiti istituzionali assenti</strong></p>
+                        <p><a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Council on Foreign Relations</a> documenta: "Una valuta BRICS richiederebbe compromessi politici maggiori, inclusa un'unione bancaria, un'unione fiscale e convergenza macroeconomica generale... molti esperti dubitano che una nuova valuta di riserva BRICS sarebbe abbastanza stabile o affidabile da essere ampiamente fidata per transazioni globali".</p>
+                        <p><a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">Enoch Godongwana, ministro delle finanze sudafricano</a>: "Creare una valuta comune presuppone istituire una banca centrale, e ciò presuppone perdere indipendenza sulle politiche monetarie, e non penso che alcun paese sia pronto per questo".</p>
+                        
+                        <p><strong>4. Dominio persistente del dollaro USA nei dati</strong></p>
+                        <p>Dati sulle transazioni: <a href="https://responsiblestatecraft.org/dedollarization-china-russia/" target="_blank">Il dollaro è coinvolto nel 90% delle transazioni di cambio valutario globali</a>.</p>
+                        <p>Dati sulle riserve: <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">59% delle riserve valutarie ufficiali globali sono in dollari (Q1 2023)</a>, contro <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">2,5% per il renminbi cinese</a>.</p>
+                        
+                        <p><strong>5. Contraddizioni pratiche osservate</strong></p>
+                        <p><a href="https://www.bloomberg.com/news/newsletters/2024-10-26/bloomberg-new-economy-why-brics-de-dollarization-dream-remains-a-fantasy" target="_blank">Bloomberg ha documentato che al summit di Kazan "gli organizzatori hanno consigliato ai partecipanti di portare dollari (o euro). Le carte Visa non-russe non funzioneranno, hanno aggiunto"</a>.</p>
+                        <p>Questi elementi rappresentano i punti deboli documentati nelle analisi della posizione BRICS sulla de-dollarizzazione.</p>`,
+                    "news2.q2": `<h3>Confronta le evidenze delle due prospettive</h3>
+                        <p><strong>Evidenze presentate dalla prospettiva favorevole (Russia, Cina):</strong></p>
+                        <p>La posizione favorevole si basa su dati di partecipazione e sviluppi concreti. <a href="https://www.peoplesworld.org/article/brics-summit-in-kazan-is-evidence-of-the-fast-emerging-multipolar-world/" target="_blank">Il summit di Kazan ha visto la presenza di 36 delegazioni e 22 capi di stato o di governo</a>, indicando un interesse ampio verso il forum.</p>
+                        <p>Sul piano valutario, citano un declino della quota dollaro: <a href="https://foreignpolicy.com/2023/04/24/brics-currency-end-dollar-dominance-united-states-russia-china/" target="_blank">da circa 90% a 84,3% delle transazioni di cambio globali</a>, e <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">dalle riserve globali dal 70% (anno 2000) al 59% (Q1 2023)</a>.</p>
+                        <p>Implementazioni operative: <a href="https://www.csmonitor.com/World/Europe/2024/1024/brics-russia-vladimir-putin-ukraine-war-us-dollar" target="_blank">Russia e Cina conducono la maggior parte del commercio bilaterale in rubli e yuan</a>. <a href="https://en.wikipedia.org/wiki/16th_BRICS_summit" target="_blank">È stato annunciato BRICS Pay</a>, un sistema di pagamento per transazioni tra membri. <a href="https://www.peoplesworld.org/article/brics-summit-in-kazan-is-evidence-of-the-fast-emerging-multipolar-world/" target="_blank">La dichiarazione finale di Kazan include: "Accogliamo l'uso di valute locali nelle transazioni tra paesi BRICS"</a>.</p>
+                        
+                        <p><strong>Evidenze presentate dalla prospettiva scettica (analisti occidentali):</strong></p>
+                        <p>La posizione scettica presenta dati su ostacoli strutturali e contraddizioni pratiche. <a href="https://www.bloomberg.com/news/newsletters/2024-10-26/bloomberg-new-economy-why-brics-de-dollarization-dream-remains-a-fantasy" target="_blank">Bloomberg</a> ha riportato che gli organizzatori del summit di Kazan hanno consigliato ai partecipanti di portare dollari o euro, con carte Visa non-russe non funzionanti.</p>
+                        <p>Sul piano istituzionale: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Il Council on Foreign Relations</a> afferma che "una valuta BRICS richiederebbe compromessi politici maggiori, inclusa un'unione bancaria, un'unione fiscale e convergenza macroeconomica generale". <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">Il ministro delle finanze sudafricano Enoch Godongwana</a> ha dichiarato: "Nessuno ha proposto una valuta BRICS, nemmeno in riunioni informali".</p>
+                        <p>Sfide tecniche documentate: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Analisti della Mercator Institute</a> evidenziano la vaghezza della dichiarazione di Kazan anche sulla versione più limitata (BRICS Cross-Border Payments Initiative). <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Un esperto bancario indiano</a> chiede: "Come gestire le fluttuazioni valutarie? Potrebbero usare il dollaro USD come valuta di riferimento—in quel caso, l'intero scopo di allontanarsi dal dollaro è perso".</p>
+                        <p>Dato comparativo sulle valute: <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">Il renminbi rappresenta il 2,5% delle riserve valutarie globali</a>, contro il 59% del dollaro.</p>
+                        
+                        <p><strong>Aree di sovrapposizione e divergenza:</strong></p>
+                        <p>Entrambe le prospettive concordano che:</p>
+                        <ul>
+                            <li>Il dollaro sta gradualmente perdendo quota nelle transazioni globali</li>
+                            <li>Esistono esempi funzionanti di commercio bilaterale in valute locali</li>
+                            <li>I BRICS hanno dichiarato l'intenzione di ridurre la dipendenza dal dollaro</li>
+                        </ul>
+                        <p>Le prospettive divergono su:</p>
+                        <ul>
+                            <li>Fattibilità tecnica: favorevoli citano progressi e intenzioni; scettici citano assenza di infrastruttura credibile</li>
+                            <li>Timeline: favorevoli presentano il processo come in corso; scettici indicano ostacoli strutturali che richiederebbero decenni</li>
+                            <li>Coesione interna: favorevoli enfatizzano la dichiarazione comune; scettici evidenziano divergenze dichiarate (es. Sud Africa sulla valuta comune)</li>
+                        </ul>`,
+                    "news3.q1": `<h3>Quali sono le cause tecniche specifiche dei ritardi?</h3>
+                        <p>I ritardi di Blackwell derivano da problemi su tre livelli: design del chip, packaging avanzato e complessità dei sistemi.</p>
+                        
+                        <p><strong>Problemi di design del chip</strong></p>
+                        <p>Il problema principale riguarda <a href="https://www.datacenterdynamics.com/en/news/nvidia-delays-blackwell-gpus-impacting-hyperscaler-data-center-plans-report/" target="_blank">il die che connette due GPU Blackwell nel GB200</a>. TSMC ha scoperto il difetto durante la produzione, richiedendo a NVIDIA di modificare il design e condurre nuovi test prima della produzione di massa.</p>
+                        <p><a href="https://www.theregister.com/2024/08/05/nvidia_delays_blackwell_gpus_until/" target="_blank">SemiAnalysis ha identificato che i ritardi richiedono un redesign dei bridge dies, insieme a un redesign dei layer metallici di routing globale superiori e del bump out del die Blackwell stesso</a>. <a href="https://www.trendforce.com/news/2024/09/10/news-nvidias-blackwell-overcomes-delays-as-gb200-reportedly-sets-for-december-mass-production/" target="_blank">Commercial Times ha riportato che il chip Blackwell affrontava instabilità nei layer metallici durante il processo HV, problema poi risolto entro luglio</a>. <a href="https://www.trendforce.com/news/2024/09/10/news-nvidias-blackwell-overcomes-delays-as-gb200-reportedly-sets-for-december-mass-production/" target="_blank">NVIDIA ha successivamente eseguito modifiche alla mask GPU a 6 layer della serie Blackwell</a>, permettendo al processo di procedere senza re-taping out completo.</p>
+                        
+                        <p><strong>Problemi di packaging CoWoS-L</strong></p>
+                        <p>Blackwell è <a href="https://www.theregister.com/2024/08/05/nvidia_delays_blackwell_gpus_until/" target="_blank">il primo design ad alto volume che utilizza la tecnologia di packaging CoWoS-L di TSMC</a>. Questa tecnologia è più complessa della precedente CoWoS-S: <a href="https://newsletter.semianalysis.com/p/nvidias-blackwell-reworked-shipment" target="_blank">CoWoS-L usa un interposer RDL con interconnessioni in silicio locali (LSI) e bridge dies integrati per collegare compute e memoria</a>.</p>
+                        <p><a href="https://www.fierceelectronics.com/ai/heres-whats-wrong-nvidias-blackwell-gpu" target="_blank">SemiAnalysis ha documentato problemi con CoWoS-L relativi a warpage tra die di silicio, bridges e substrate</a>. La transizione da CoWoS-S a CoWoS-L crea ulteriori difficoltà: <a href="https://www.theregister.com/2024/08/05/nvidia_delays_blackwell_gpus_until/" target="_blank">TSMC ha costruito molta capacità CoWoS-S negli ultimi anni principalmente per NVIDIA, ma ora deve convertire questa capacità a CoWoS-L mentre costruisce un nuovo fab (AP6) dedicato</a>. Questo processo di conversione rende la rampa produttiva "molto irregolare".</p>
+                        
+                        <p><strong>Problemi a livello di sistema</strong></p>
+                        <p>Il GB200 rappresenta <a href="https://semianalysis.com/2024/08/04/nvidias-blackwell-reworked-shipment/" target="_blank">il chip tecnicamente più avanzato della famiglia Blackwell</a>, con <a href="https://semianalysis.com/2024/08/04/nvidias-blackwell-reworked-shipment/" target="_blank">un rack da 72 GPU che ha una densità di potenza di ~125 kW per rack, contro lo standard datacenter di ~12-20 kW</a>. Questa densità senza precedenti ha generato <a href="https://semianalysis.com/2024/08/04/nvidias-blackwell-reworked-shipment/" target="_blank">numerosi problemi relativi a power delivery, surriscaldamento, rampa della supply chain per raffreddamento a liquido, perdite d'acqua dai quick disconnect e varie sfide di complessità del board</a>.</p>
+                        <p>A dicembre 2024, <a href="https://www.trendforce.com/news/2024/12/02/news-production-hurdles-for-gb200-spark-rumors-of-microsoft-cutting-orders/" target="_blank">TrendForce ha riportato nuovi ostacoli tecnici nel design della connessione backplane, con yield di test per i connettori cartridge forniti da Amphenol risultati subottimali</a>, potenzialmente ritardando la produzione di massa fino a marzo 2025. <a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/nvidia-gb200-production-ramps-up-after-suppliers-tackle-ai-server-overheating-and-liquid-cooling-leaks" target="_blank">Tom's Hardware ha documentato che i fornitori inclusi Foxconn, Inventec, Dell e Wistron hanno riportato problemi di connettività durante i test interni</a>, richiedendo collaborazione con NVIDIA due o tre mesi fa.</p>`,
+                    "news3.q2": `<h3>Come si posiziona AMD come alternativa?</h3>
+                        <p>AMD ha lanciato la serie MI300 come alternativa diretta a NVIDIA, con risultati tecnici competitivi ma sfide di ecosistema.</p>
+                        
+                        <p><strong>Performance comparativa documentata</strong></p>
+                        <p>I primi benchmark MLPerf Inference v4.1 mostrano competitività tra <a href="https://www.nextplatform.com/2024/09/03/the-first-ai-benchmarks-pitting-amd-against-nvidia/" target="_blank">MI300X e H100 per il modello Llama 2 70B</a>. <a href="https://www.nextplatform.com/2024/09/03/the-first-ai-benchmarks-pitting-amd-against-nvidia/" target="_blank">Next Platform ha analizzato che l'MI300X è assolutamente competitivo con l'H100 di NVIDIA su un set di benchmark di inferenza AI</a>, e può essere competitivo anche con H100 e H200 in termini di costi.</p>
+                        <p><a href="https://www.tomshardware.com/pc-components/cpus/amd-unveils-instinct-mi300x-gpu-and-mi300a-apu-claims-up-to-16x-lead-over-nvidias-competing-gpus" target="_blank">AMD afferma che l'MI300X offre fino a 1,6X più performance dell'H100 in workload di inferenza AI</a>, con <a href="https://www.tomshardware.com/pc-components/cpus/amd-unveils-instinct-mi300x-gpu-and-mi300a-apu-claims-up-to-16x-lead-over-nvidias-competing-gpus" target="_blank">192 GB di memoria HBM3 contro gli 80 GB dell'H100 base</a>, permettendo di supportare il doppio dei modelli LLM per sistema.</p>
+                        
+                        <p><strong>Roadmap prodotti</strong></p>
+                        <p><a href="https://analyticsindiamag.com/global-tech/amd-is-finally-catching-up-with-nvidia-blackwell/" target="_blank">La CEO di AMD Lisa Su ha dichiarato il 30 ottobre che l'MI325 è un prodotto "game-changing" che competerà contro l'H200 di NVIDIA, mentre la serie MI350 competerà contro Blackwell</a>. <a href="https://analyticsindiamag.com/global-tech/amd-is-finally-catching-up-with-nvidia-blackwell/" target="_blank">Su ha affermato che la serie MI350 è "on track per il lancio nella seconda metà del 2025 con il più grande aumento generazionale di performance AI mai consegnato"</a>.</p>
+                        
+                        <p><strong>Adozione da parte degli hyperscaler</strong></p>
+                        <p><a href="https://ts2.tech/en/nvidia-blackwell-b200-vs-amd-mi350-vs-google-tpu-v6e-2025s-ultimate-ai-accelerator-showdown/" target="_blank">Microsoft Azure ha annunciato l'intenzione di offrire VM con serie MI300</a>, con l'MI350 che seguirà se le performance si dimostrano valide. Ci sono <a href="https://ts2.tech/en/nvidia-blackwell-b200-vs-amd-mi350-vs-google-tpu-v6e-2025s-ultimate-ai-accelerator-showdown/" target="_blank">report di Meta che valuta MI300/MI350 per la propria infrastruttura AI</a>, anche se Meta ha storicamente usato principalmente NVIDIA.</p>
+                        <p><a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">SemiAnalysis documenta che tutti gli hyperscaler sono attesi deployare l'MI355 e molti procederanno anche con la soluzione rack-scale MI400</a>.</p>
+                        
+                        <p><strong>Sfide dell'ecosistema</strong></p>
+                        <p><a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">Una delle principali sfide nell'aumentare l'adozione AMD è che attualmente esistono pochissimi Neoclouds focalizzati su AMD rispetto a oltre cento focalizzati su NVIDIA</a>. Questa scarsità porta a <a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">prezzi artificialmente alti per il noleggio di GPU AMD, erodendo la competitività di costo complessiva</a>.</p>
+                        <p>Nel Q2 2025, <a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">i contratti a un mese per H200 costavano circa $2,50/ora/GPU, mentre i contratti per MI300X erano allo stesso prezzo, rendendo l'MI300X non competitivo rispetto all'H200</a>. Per inference reasoning, <a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">l'MI300X necessita di un prezzo sotto $2,10-2,40/ora per essere competitivo in performance per dollaro con l'H200</a>.</p>
+                        
+                        <p><strong>Vantaggi economici</strong></p>
+                        <p>Il confronto di costi mostra differenze significative: <a href="https://ai-stack.ai/en/blackwell-vs-mi300x" target="_blank">pod Blackwell DGX costano circa $9M con potenza di ~360 kW, mentre pod MI300X costano circa $3M con potenza di ~192 kW</a>. Su un ciclo di ammortamento di cinque anni, questa differenza diventa rilevante per i decision-maker di alto livello.</p>
+                        
+                        <p><strong>Maturazione software</strong></p>
+                        <p><a href="https://www.storagereview.com/news/mlperf-inference-v5-1-nvidia-blackwell-ultra-vs-amd-instinct-platforms/" target="_blank">Next Platform nota che "i giorni in cui si guardavano solo le GPU verdi potrebbero essere finiti—ROCm sta maturando e MI300 è praticabile in deployment di inferenza reali"</a>. <a href="https://ai-stack.ai/en/blackwell-vs-mi300x" target="_blank">Il recente "upstream first sprint" di AMD ha ridotto il gap; un singolo comando Docker pull ora installa un runtime vLLM completamente ottimizzato per MI300X</a>.</p>
+                        <p>Tuttavia, CUDA mantiene <a href="https://ai-stack.ai/en/blackwell-vs-mi300x" target="_blank">il percorso più ricco e a più bassa sintonia per raggiungere numeri di picco</a>, specialmente per kernel proprietari come Paged-Attention o il Transformer Engine 2 di NVIDIA.</p>`
+                }
+            },
+            en: {
+                ui: {
+                    "Clicca una notizia per vedere come si espande": "Click a news item to see how it expands",
+                    "Il Tuo Briefing": "Your Briefing",
+                    "Chiedi all'Assistente AI": "Ask the AI Assistant",
+                    "Seleziona una domanda qui sotto per vedere la risposta AI": "Select a question below to see the AI response",
+                    "📄 Resoconto Dettagliato": "📄 Detailed Report",
+                    "⚡ Controversie & Prospettive Multiple": "⚡ Controversies & Multiple Perspectives",
+                    "🎯 Key Takeaways": "🎯 Key Takeaways",
+                    "📚 Fonti Primarie & Report": "📚 Primary Sources & Reports",
+                    "🤖 Interroga con l'AI": "🤖 Ask the AI"
+                },
+                news: {
+                    "news1.title": "EU AI Act comes into force — Tech companies rush to comply by August 2026",
+                    "news1.meta": "⏱️ Updated 2h ago • 🎯 4 official EU sources",
+                    "news1.detail": `The European Union's AI Act officially came into force on August 1, 2024, becoming the world's first comprehensive legislation to regulate artificial intelligence in both public and private sectors. The regulation adopts a risk-based approach, classifying AI systems into four categories: unacceptable risk (prohibited), high risk (regulated), limited risk (transparency obligations), and minimal risk (no obligations).<br><br>Staggered implementation timeline: rules on prohibited AI will take effect in February 2025, while providers of high-risk AI systems must comply by August 2026. For general-purpose AI (GPAI) models, including those already on the market before August 2025, the rules are operational from August 2025. Fines for violations range from €15 million or 3% of global annual turnover, up to €35 million or 7% for serious violations such as the use of prohibited manipulative techniques.`,
+                    "news2.title": "BRICS Summit in Kazan — Modi, Putin and Xi discuss de-dollarization",
+                    "news2.meta": "⏱️ 2024 • ⚡ 2 perspectives",
+                    "news2.detail": `The 16th BRICS summit was held in Kazan, Russia, from October 22-24, 2024, marking the first summit after the bloc's expansion that now includes Egypt, Ethiopia, Iran, and the United Arab Emirates in addition to the founding members (Brazil, Russia, India, China, South Africa). Over 30 delegations and 22 heads of state or government participated, including Indian Prime Minister Narendra Modi, Russian President Vladimir Putin, and Chinese leader Xi Jinping.<br><br>Main focus of the summit: reducing dependence on the US dollar through the use of local currencies in transactions between BRICS countries, developing alternative payment systems, and creating financial infrastructure outside Western control. The dollar currently dominates 90% of global foreign exchange transactions, and BRICS leaders emphasized the need for a multipolar financial system less vulnerable to the influence of a single currency.`,
+                    "news3.title": "NVIDIA Blackwell arrives — 25x more efficient but production delays worry customers",
+                    "news3.meta": "⏱️ Updated 6h ago • ⚡ 2 perspectives",
+                    "news3.detail": `NVIDIA officially announced the Blackwell GPU architecture in March 2024, with the GB200 platform promising revolutionary performance for generative AI. According to NVIDIA, the GB200 superchip offers up to 25x less energy consumption and costs compared to the previous generation (Hopper H100) for AI model inference with trillions of parameters. Performance: 20 petaFLOPS on a single chip, support for models up to 10 trillion parameters.<br><br>However, production has faced significant challenges. In August 2024, NVIDIA confirmed delays of 3+ months due to mask design issues that impacted chip yields. Additional complications: power delivery problems, overheating, complexity of liquid cooling systems, and TSMC's transition from CoWoS-S to CoWoS-L. Meta has publicly stated it does not expect significant deliveries in 2024. NVIDIA now expects significant production ramp-up in 2H 2025.`
+                },
+                controversy: {
+                    "brics.title": "2 Contrasting Positions",
+                    "brics.favorable.title": "Favorable (Russia, China)",
+                    "brics.favorable.sources": "Putin (Kazan), BRICS Declaration 2024",
+                    "brics.favorable.argument": "\"It is essential to build reliable alternative financial mechanisms free from dictate\" (Putin). \"We welcome the use of local currencies in transactions between BRICS countries\" (Kazan Declaration). Argument: the US uses the dollar as a weapon through sanctions and SWIFT.",
+                    "brics.skeptical.title": "Skeptics (Western Analysts)",
+                    "brics.skeptical.sources": "Bloomberg, CFR, Voice of America",
+                    "brics.skeptical.argument": "\"BRICS de-dollarization dream remains a fantasy\" (Bloomberg). \"Ambitions to create their own currency face potentially insurmountable challenges\" (Council on Foreign Relations). \"Analysts express serious doubts about the success of the BRICS payment system\" (VOA).",
+                    "nvidia.title": "Performance vs Production",
+                    "nvidia.optimistic.title": "NVIDIA and Optimists",
+                    "nvidia.optimistic.sources": "NVIDIA official, long-term investors",
+                    "nvidia.optimistic.argument": "Revolutionary performance that justifies the wait. 25x energy efficiency, 30x inference performance vs Hopper. Delays are normal for such advanced architectures. Demand is extremely high (multi-billion orders). Significant Blackwell revenue expected in Q4 2024 despite delays.",
+                    "nvidia.concerned.title": "Concerned Analysts",
+                    "nvidia.concerned.sources": "SemiAnalysis, The Information, hyperscaler customers",
+                    "nvidia.concerned.argument": "Design problems deeper than expected: power delivery, overheating, board complexity. Supply will be 'considerably lower' in Q4 2024 and H1 2025. Meta doesn't expect deliveries in 2024. Customers might consider alternatives (AMD MI300). Delays cost opportunities in rapidly growing AI market."
+                },
+                aiResponses: {
+                    "news1.q1": `<h3>What AI systems are considered 'high-risk'?</h3>
+                        <p>The AI Act identifies high-risk systems through two main pathways defined in <a href="https://artificialintelligenceact.eu/article/6/" target="_blank">Article 6</a>.</p>
+                        
+                        <p><strong>First pathway: AI as a safety component (Article 6(1))</strong></p>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">An AI system is considered high-risk if it meets two cumulative conditions</a>:</p>
+                        <ol>
+                            <li>It is used as a safety component of a product (or is itself a product) covered by EU harmonization legislation listed in Annex I of the AI Act</li>
+                            <li>The same legislation requires the product to undergo third-party conformity assessment before being placed on the EU market</li>
+                        </ol>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">Annex I contains over 30 directives and regulations, including legislation on toy safety, vehicles, civil aviation, elevators, radio equipment, and medical devices</a>.</p>
+                        
+                        <p><strong>Second pathway: Specific categories (Article 6(2) and Annex III)</strong></p>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">The AI Act contains in Annex III a list of AI systems that must be considered high-risk</a>. <a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">The list currently includes AI systems in eight different categories</a>:</p>
+                        <ol>
+                            <li><a href="https://artificialintelligenceact.eu/annex/3/" target="_blank"><strong>Biometrics</strong></a>: remote biometric identification systems (excluding those for simple identity verification), biometric categorization systems based on sensitive attributes, emotion recognition systems</li>
+                            <li><a href="https://artificialintelligenceact.eu/annex/3/" target="_blank"><strong>Critical infrastructure</strong></a>: systems used as safety components in managing critical digital infrastructure, road traffic, energy supply</li>
+                            <li><a href="https://www.aoshearman.com/en/insights/ao-shearman-on-tech/zooming-in-on-ai-10-eu-ai-act-what-are-the-obligations-for-high-risk-ai-systems" target="_blank"><strong>Education and vocational training</strong></a>: systems for student assessment in educational institutions</li>
+                            <li><a href="https://www.aoshearman.com/en/insights/ao-shearman-on-tech/zooming-in-on-ai-10-eu-ai-act-what-are-the-obligations-for-high-risk-ai-systems" target="_blank"><strong>Employment and worker management</strong></a>: systems for recruitment, performance evaluation, task allocation</li>
+                            <li><a href="https://www.trail-ml.com/blog/eu-ai-act-how-risk-is-classified" target="_blank"><strong>Access to essential services</strong></a>: systems for evaluating eligibility for benefits and public services</li>
+                            <li><a href="https://artificialintelligenceact.eu/annex/3/" target="_blank"><strong>Law enforcement</strong></a>: systems for assessing the risk of crime by individuals, profiling in criminal investigations</li>
+                            <li><a href="https://www.trail-ml.com/blog/eu-ai-act-how-risk-is-classified" target="_blank"><strong>Migration, asylum, and border control management</strong></a></li>
+                            <li><a href="https://www.trail-ml.com/blog/eu-ai-act-how-risk-is-classified" target="_blank"><strong>Administration of justice</strong></a>: systems for assisting judicial authorities</li>
+                        </ol>
+                        
+                        <p><strong>Documented exceptions</strong></p>
+                        <p><a href="https://artificialintelligenceact.eu/article/6/" target="_blank">Systems listed in Annex III are not considered high-risk if they do not pose a significant risk of harm to health, safety, or fundamental rights</a>. <a href="https://artificialintelligenceact.eu/article/6/" target="_blank">This exception applies when the system</a>:</p>
+                        <ul>
+                            <li>Is intended to perform a narrow procedural task</li>
+                            <li>Is intended to improve the result of a human activity already completed</li>
+                            <li>Is intended to detect decision-making patterns without replacing human assessment</li>
+                            <li>Is intended to perform a preparatory task for an assessment</li>
+                        </ul>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrih-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">If a provider believes their AI system is not high-risk, they must document their assessment before selling or using it</a>. <a href="https://artificialintelligenceact.eu/article/6/" target="_blank">The European Commission will provide guidelines by February 2026 with practical examples of high-risk and non-high-risk AI system use cases</a>.</p>`,
+                    "news1.q2": `<h3>How does it apply to non-European companies?</h3>
+                        <p>The AI Act has explicit extraterritorial reach, defined in <a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">Article 2</a>.</p>
+                        
+                        <p><strong>Extraterritorial application principle</strong></p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">The AI Act applies to providers who place on the market or put into service AI systems or GPAI models in the EU, regardless of whether such providers are established or located in the EU or in a third country</a>.</p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">Article 2(1)(c) specifically includes providers and deployers of AI systems who are headquartered or located in third countries, when the output produced by the AI system is used in the EU</a>. <a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">This output-based jurisdiction is a key aspect of the AI Act's extraterritorial reach</a>.</p>
+                        
+                        <p><strong>When it applies to non-EU companies</strong></p>
+                        <p><a href="https://www.holisticai.com/blog/implications-of-the-eu-ai-act-for-non-eu-leadership-teams" target="_blank">The AI Act governs the EU market, not companies physically based in the EU</a>. <a href="https://www.holisticai.com/blog/implications-of-the-eu-ai-act-for-non-eu-leadership-teams" target="_blank">Non-EU companies offering AI products and services within the EU market fall under the AI Act's scope</a>.</p>
+                        <p><a href="https://www.dlapiper.com/en/insights/publications/2024/02/extra-territorial-application-of-the-ai-act-how-will-it-impact-australian-organisations" target="_blank">The AI Act applies to organizations outside the EU when</a>:</p>
+                        <ul>
+                            <li>Such organizations place AI products on the market or put such products into service in the EU</li>
+                            <li>They make available in the EU outputs produced by an AI product</li>
+                        </ul>
+                        <p><a href="https://www.afriwise.com/blog/extraterritorial-application-of-the-eu-ai-act-what-non-eu-companies-should-know" target="_blank">The principle is rooted in "market location": if the output or use of an AI system affects people in the EU, the AI Act may apply</a>.</p>
+                        
+                        <p><strong>Documented practical examples</strong></p>
+                        <p><a href="https://www.afriwise.com/blog/extraterritorial-application-of-the-eu-ai-act-what-non-eu-companies-should-know" target="_blank">Cases where the AI Act applies to non-EU companies</a>:</p>
+                        <ul>
+                            <li>A South African company developing an AI recruitment tool and marketing it to EU employers must comply with AI Act requirements for high-risk systems, even if all development and hosting occurs outside the EU</li>
+                            <li>A Mauritian provider offering a cloud-based facial recognition service accessible to EU clients must comply because the service is used in the EU</li>
+                            <li>A Kenyan manufacturer selling smart home devices with integrated AI to EU consumers must ensure compliance because the devices are placed on the EU market</li>
+                        </ul>
+                        <p><a href="https://www.afriwise.com/blog/extraterritorial-application-of-the-eu-ai-act-what-non-eu-companies-should-know" target="_blank">Case where the AI Act does not apply</a>: if a South African company imports an AI tool from a French company and distributes it in the South African market, it does not need to comply with the AI Act.</p>
+                        
+                        <p><strong>Authorized representative requirement</strong></p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">Providers of high-risk AI systems established in third countries must appoint an authorized representative in the EU before placing their systems on the EU market</a>.</p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">An "authorized representative" is defined as a natural or legal person located or established in the EU who has received and accepted a written mandate from a provider to perform on their behalf the obligations and procedures established by the AI Act</a>.</p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">The AI Act distinguishes between authorized representatives for high-risk AI systems (Article 22) and those for GPAI models (Article 54)</a>.</p>
+                        
+                        <p><strong>Obligations and sanctions</strong></p>
+                        <p><a href="https://www.holisticai.com/blog/implications-of-the-eu-ai-act-for-non-eu-leadership-teams" target="_blank">Obligations for companies inside and outside the EU are the same</a>, with the AI Act adopting a risk-based approach to determine obligations associated with each system.</p>
+                        <p><a href="https://www.dlapiper.com/en/insights/publications/2024/02/extra-territorial-application-of-the-ai-act-how-will-it-impact-australian-organisations" target="_blank">The sanctions provided include</a>:</p>
+                        <ul>
+                            <li>For violations related to prohibited or unacceptable risk systems: the greater of 7% of global turnover or €35 million</li>
+                            <li>For violations of other obligations: the greater of 3% of global turnover or €15 million</li>
+                            <li>For providing incorrect information to authorities: the greater of 1% of global turnover or €7.5 million</li>
+                        </ul>`,
+                    "news2.q1": `<h3>What are the weaknesses of the BRICS position?</h3>
+                        <p><strong>1. Documented divergence of priorities among members</strong></p>
+                        <p>Analysts identify a division: <a href="https://www.thegatewaypundit.com/2024/10/multipolarity-brics-summit-kicks-tomorrow-kazan-36/" target="_blank">"India and Brazil see BRICS primarily as an economic forum, while Russia and China consider it more as a geopolitical group"</a>.</p>
+                        <p><a href="https://www.csmonitor.com/World/Europe/2024/1024/brics-russia-vladimir-putin-ukraine-war-us-dollar" target="_blank">Christian Science Monitor</a> reports: "Countries like Russia and Iran need an alternative; for them using national currencies is a tactical, not strategic solution. Other countries like Brazil trade within the group mainly with China, and don't have such immediate need".</p>
+                        <p>Bilateral tensions: <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">Jim O'Neill</a>, who coined the term BRIC in 2001, called the idea of a common currency "ridiculous," citing the tumultuous relationship between India and China. <a href="https://www.csmonitor.com/World/Europe/2024/1024/brics-russia-vladimir-putin-ukraine-war-us-dollar" target="_blank">India and China finalized a border agreement only during the Kazan summit</a>.</p>
+                        
+                        <p><strong>2. Absence of operational technical infrastructure</strong></p>
+                        <p><a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Eva Seiwert from Mercator Institute for China Studies</a> states: "There's still a long way to go before BRICS can launch a payment system treatable as a serious alternative to SWIFT".</p>
+                        <p>The Kazan declaration was evaluated as <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">"vague even on the milder version called BRICS Cross-Border Payments Initiative (BCBPI)"</a>.</p>
+                        <p>Identified technical problems: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Gopal Tripathy, Treasury head at Jana Small Finance Bank</a>: "How to handle currency fluctuations if an alternative payment system is established? They might use USD as a reference currency. In that case, the entire purpose of moving away from the dollar is lost".</p>
+                        <p>Operational limitations: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">"Companies in India, China, South Africa, and Brazil might find it difficult to make and receive payments with business partners in countries outside the BRICS club"</a>.</p>
+                        
+                        <p><strong>3. Absent institutional requirements</strong></p>
+                        <p><a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Council on Foreign Relations</a> documents: "A BRICS currency would require greater political compromises, including a banking union, a fiscal union, and general macroeconomic convergence... many experts doubt that a new BRICS reserve currency would be stable or reliable enough to be widely trusted for global transactions".</p>
+                        <p><a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">Enoch Godongwana, South African finance minister</a>: "Creating a common currency presupposes establishing a central bank, and that presupposes losing independence on monetary policies, and I don't think any country is ready for this".</p>
+                        
+                        <p><strong>4. Persistent US dollar dominance in data</strong></p>
+                        <p>Transaction data: <a href="https://responsiblestatecraft.org/dedollarization-china-russia/" target="_blank">The dollar is involved in 90% of global foreign exchange transactions</a>.</p>
+                        <p>Reserve data: <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">59% of global official foreign exchange reserves are in dollars (Q1 2023)</a>, against <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">2.5% for the Chinese renminbi</a>.</p>
+                        
+                        <p><strong>5. Observed practical contradictions</strong></p>
+                        <p><a href="https://www.bloomberg.com/news/newsletters/2024-10-26/bloomberg-new-economy-why-brics-de-dollarization-dream-remains-a-fantasy" target="_blank">Bloomberg documented that at the Kazan summit "organizers advised participants to bring dollars (or euros). Non-Russian Visa cards won't work, they added"</a>.</p>
+                        <p>These elements represent the documented weaknesses in analyses of the BRICS position on de-dollarization.</p>`,
+                    "news2.q2": `<h3>Compare the evidence from both perspectives</h3>
+                        <p><strong>Evidence presented by the favorable perspective (Russia, China):</strong></p>
+                        <p>The favorable position is based on participation data and concrete developments. <a href="https://www.peoplesworld.org/article/brics-summit-in-kazan-is-evidence-of-the-fast-emerging-multipolar-world/" target="_blank">The Kazan summit saw the presence of 36 delegations and 22 heads of state or government</a>, indicating broad interest in the forum.</p>
+                        <p>On the currency front, they cite a decline in dollar share: <a href="https://foreignpolicy.com/2023/04/24/brics-currency-end-dollar-dominance-united-states-russia-china/" target="_blank">from about 90% to 84.3% of global foreign exchange transactions</a>, and <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">from global reserves from 70% (year 2000) to 59% (Q1 2023)</a>.</p>
+                        <p>Operational implementations: <a href="https://www.csmonitor.com/World/Europe/2024/1024/brics-russia-vladimir-putin-ukraine-war-us-dollar" target="_blank">Russia and China conduct most of their bilateral trade in rubles and yuan</a>. <a href="https://en.wikipedia.org/wiki/16th_BRICS_summit" target="_blank">BRICS Pay was announced</a>, a payment system for transactions between members. <a href="https://www.peoplesworld.org/article/brics-summit-in-kazan-is-evidence-of-the-fast-emerging-multipolar-world/" target="_blank">The final Kazan declaration includes: "We welcome the use of local currencies in transactions between BRICS countries"</a>.</p>
+                        
+                        <p><strong>Evidence presented by the skeptical perspective (Western analysts):</strong></p>
+                        <p>The skeptical position presents data on structural obstacles and practical contradictions. <a href="https://www.bloomberg.com/news/newsletters/2024-10-26/bloomberg-new-economy-why-brics-de-dollarization-dream-remains-a-fantasy" target="_blank">Bloomberg</a> reported that Kazan summit organizers advised participants to bring dollars or euros, with non-Russian Visa cards not working.</p>
+                        <p>On the institutional level: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">The Council on Foreign Relations</a> states that "a BRICS currency would require greater political compromises, including a banking union, a fiscal union, and general macroeconomic convergence". <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">South African finance minister Enoch Godongwana</a> declared: "No one has proposed a BRICS currency, not even in informal meetings".</p>
+                        <p>Documented technical challenges: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Mercator Institute analysts</a> highlight the vagueness of the Kazan declaration even on the more limited version (BRICS Cross-Border Payments Initiative). <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">An Indian banking expert</a> asks: "How to handle currency fluctuations? They might use the USD dollar as a reference currency—in that case, the entire purpose of moving away from the dollar is lost".</p>
+                        <p>Comparative currency data: <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">The renminbi represents 2.5% of global foreign exchange reserves</a>, against 59% for the dollar.</p>
+                        
+                        <p><strong>Areas of overlap and divergence:</strong></p>
+                        <p>Both perspectives agree that:</p>
+                        <ul>
+                            <li>The dollar is gradually losing share in global transactions</li>
+                            <li>Working examples of bilateral trade in local currencies exist</li>
+                            <li>BRICS has declared the intention to reduce dollar dependence</li>
+                        </ul>
+                        <p>The perspectives diverge on:</p>
+                        <ul>
+                            <li>Technical feasibility: favorable cite progress and intentions; skeptics cite absence of credible infrastructure</li>
+                            <li>Timeline: favorable present the process as ongoing; skeptics indicate structural obstacles that would require decades</li>
+                            <li>Internal cohesion: favorable emphasize common declaration; skeptics highlight declared divergences (e.g., South Africa on common currency)</li>
+                        </ul>`,
+                    "news3.q1": `<h3>What are the specific technical causes of the delays?</h3>
+                        <p>Blackwell delays stem from problems at three levels: chip design, advanced packaging, and system complexity.</p>
+                        
+                        <p><strong>Chip design problems</strong></p>
+                        <p>The main issue concerns <a href="https://www.datacenterdynamics.com/en/news/nvidia-delays-blackwell-gpus-impacting-hyperscaler-data-center-plans-report/" target="_blank">the die that connects two Blackwell GPUs in the GB200</a>. TSMC discovered the defect during production, requiring NVIDIA to modify the design and conduct new tests before mass production.</p>
+                        <p><a href="https://www.theregister.com/2024/08/05/nvidia_delays_blackwell_gpus_until/" target="_blank">SemiAnalysis identified that delays require a redesign of bridge dies, along with a redesign of upper global routing metal layers and the bump out of the Blackwell die itself</a>. <a href="https://www.trendforce.com/news/2024/09/10/news-nvidias-blackwell-overcomes-delays-as-gb200-reportedly-sets-for-december-mass-production/" target="_blank">Commercial Times reported that the Blackwell chip faced instability in metal layers during the HV process, problem then resolved by July</a>. <a href="https://www.trendforce.com/news/2024/09/10/news-nvidias-blackwell-overcomes-delays-as-gb200-reportedly-sets-for-december-mass-production/" target="_blank">NVIDIA subsequently executed modifications to the 6-layer GPU mask of the Blackwell series</a>, allowing the process to proceed without complete re-taping out.</p>
+                        
+                        <p><strong>CoWoS-L packaging problems</strong></p>
+                        <p>Blackwell is <a href="https://www.theregister.com/2024/08/05/nvidia_delays_blackwell_gpus_until/" target="_blank">the first high-volume design using TSMC's CoWoS-L packaging technology</a>. This technology is more complex than the previous CoWoS-S: <a href="https://newsletter.semianalysis.com/p/nvidias-blackwell-reworked-shipment" target="_blank">CoWoS-L uses an RDL interposer with local silicon interconnects (LSI) and integrated bridge dies to connect compute and memory</a>.</p>
+                        <p><a href="https://www.fierceelectronics.com/ai/heres-whats-wrong-nvidias-blackwell-gpu" target="_blank">SemiAnalysis documented problems with CoWoS-L related to warpage between silicon dies, bridges, and substrate</a>. The transition from CoWoS-S to CoWoS-L creates additional difficulties: <a href="https://www.theregister.com/2024/08/05/nvidia_delays_blackwell_gpus_until/" target="_blank">TSMC has built much CoWoS-S capacity in recent years mainly for NVIDIA, but now must convert this capacity to CoWoS-L while building a new dedicated fab (AP6)</a>. This conversion process makes the production ramp "very irregular".</p>
+                        
+                        <p><strong>System-level problems</strong></p>
+                        <p>The GB200 represents <a href="https://semianalysis.com/2024/08/04/nvidias-blackwell-reworked-shipment/" target="_blank">the most technically advanced chip in the Blackwell family</a>, with <a href="https://semianalysis.com/2024/08/04/nvidias-blackwell-reworked-shipment/" target="_blank">a 72-GPU rack that has a power density of ~125 kW per rack, against the datacenter standard of ~12-20 kW</a>. This unprecedented density has generated <a href="https://semianalysis.com/2024/08/04/nvidias-blackwell-reworked-shipment/" target="_blank">numerous problems related to power delivery, overheating, supply chain ramp for liquid cooling, water leaks from quick disconnects, and various board complexity challenges</a>.</p>
+                        <p>In December 2024, <a href="https://www.trendforce.com/news/2024/12/02/news-production-hurdles-for-gb200-spark-rumors-of-microsoft-cutting-orders/" target="_blank">TrendForce reported new technical obstacles in backplane connection design, with test yields for cartridge connectors supplied by Amphenol resulting suboptimal</a>, potentially delaying mass production until March 2025. <a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/nvidia-gb200-production-ramps-up-after-suppliers-tackle-ai-server-overheating-and-liquid-cooling-leaks" target="_blank">Tom's Hardware documented that suppliers including Foxconn, Inventec, Dell, and Wistron reported connectivity problems during internal tests</a>, requiring collaboration with NVIDIA two or three months ago.</p>`,
+                    "news3.q2": `<h3>How does AMD position itself as an alternative?</h3>
+                        <p>AMD launched the MI300 series as a direct alternative to NVIDIA, with competitive technical results but ecosystem challenges.</p>
+                        
+                        <p><strong>Documented comparative performance</strong></p>
+                        <p>Early MLPerf Inference v4.1 benchmarks show competitiveness between <a href="https://www.nextplatform.com/2024/09/03/the-first-ai-benchmarks-pitting-amd-against-nvidia/" target="_blank">MI300X and H100 for the Llama 2 70B model</a>. <a href="https://www.nextplatform.com/2024/09/03/the-first-ai-benchmarks-pitting-amd-against-nvidia/" target="_blank">Next Platform analyzed that the MI300X is absolutely competitive with NVIDIA's H100 on a set of AI inference benchmarks</a>, and can be competitive even with H100 and H200 in terms of costs.</p>
+                        <p><a href="https://www.tomshardware.com/pc-components/cpus/amd-unveils-instinct-mi300x-gpu-and-mi300a-apu-claims-up-to-16x-lead-over-nvidias-competing-gpus" target="_blank">AMD claims that the MI300X offers up to 1.6X more performance than the H100 in AI inference workloads</a>, with <a href="https://www.tomshardware.com/pc-components/cpus/amd-unveils-instinct-mi300x-gpu-and-mi300a-apu-claims-up-to-16x-lead-over-nvidias-competing-gpus" target="_blank">192 GB of HBM3 memory against the H100 base's 80 GB</a>, allowing support for double the LLM models per system.</p>
+                        
+                        <p><strong>Product roadmap</strong></p>
+                        <p><a href="https://analyticsindiamag.com/global-tech/amd-is-finally-catching-up-with-nvidia-blackwell/" target="_blank">AMD CEO Lisa Su declared on October 30 that the MI325 is a "game-changing" product that will compete against NVIDIA's H200, while the MI350 series will compete against Blackwell</a>. <a href="https://analyticsindiamag.com/global-tech/amd-is-finally-catching-up-with-nvidia-blackwell/" target="_blank">Su stated that the MI350 series is "on track for launch in the second half of 2025 with the largest generational AI performance increase ever delivered"</a>.</p>
+                        
+                        <p><strong>Hyperscaler adoption</strong></p>
+                        <p><a href="https://ts2.tech/en/nvidia-blackwell-b200-vs-amd-mi350-vs-google-tpu-v6e-2025s-ultimate-ai-accelerator-showdown/" target="_blank">Microsoft Azure announced the intention to offer VMs with MI300 series</a>, with MI350 to follow if performance proves valid. There are <a href="https://ts2.tech/en/nvidia-blackwell-b200-vs-amd-mi350-vs-google-tpu-v6e-2025s-ultimate-ai-accelerator-showdown/" target="_blank">reports of Meta evaluating MI300/MI350 for their own AI infrastructure</a>, although Meta has historically used mainly NVIDIA.</p>
+                        <p><a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">SemiAnalysis documents that all hyperscalers are expected to deploy the MI355 and many will also proceed with the rack-scale MI400 solution</a>.</p>
+                        
+                        <p><strong>Ecosystem challenges</strong></p>
+                        <p><a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">One of the main challenges in increasing AMD adoption is that currently there are very few Neoclouds focused on AMD compared to over a hundred focused on NVIDIA</a>. This scarcity leads to <a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">artificially high prices for AMD GPU rental, eroding overall cost competitiveness</a>.</p>
+                        <p>In Q2 2025, <a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">one-month contracts for H200 cost about $2.50/hour/GPU, while contracts for MI300X were at the same price, making MI300X uncompetitive against H200</a>. For inference reasoning, <a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">MI300X needs a price below $2.10-2.40/hour to be competitive in performance per dollar with H200</a>.</p>
+                        
+                        <p><strong>Economic advantages</strong></p>
+                        <p>Cost comparison shows significant differences: <a href="https://ai-stack.ai/en/blackwell-vs-mi300x" target="_blank">Blackwell DGX pods cost about $9M with power of ~360 kW, while MI300X pods cost about $3M with power of ~192 kW</a>. Over a five-year amortization cycle, this difference becomes relevant for high-level decision-makers.</p>
+                        
+                        <p><strong>Software maturation</strong></p>
+                        <p><a href="https://www.storagereview.com/news/mlperf-inference-v5-1-nvidia-blackwell-ultra-vs-amd-instinct-platforms/" target="_blank">Next Platform notes that "the days when only green GPUs were looked at might be over—ROCm is maturing and MI300 is viable in real inference deployments"</a>. <a href="https://ai-stack.ai/en/blackwell-vs-mi300x" target="_blank">AMD's recent "upstream first sprint" has reduced the gap; a single Docker pull command now installs a vLLM runtime fully optimized for MI300X</a>.</p>
+                        <p>However, CUDA maintains <a href="https://ai-stack.ai/en/blackwell-vs-mi300x" target="_blank">the richest and lowest-tuning path to reach peak numbers</a>, especially for proprietary kernels like Paged-Attention or NVIDIA's Transformer Engine 2.</p>`
+                }
+            }
+        };
+
+        // Translation function
+        function translateText(key, type = 'ui') {
+            return translations[currentLanguage][type][key] || key;
+        }
+
+        // Language switcher
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            updateUI();
+            
+            // Update current news content
+            const activeCard = document.querySelector('.briefing-card.active');
+            if (activeCard) {
+                const newsId = parseInt(activeCard.getAttribute('data-news'));
+                updateDetailPanel(newsId);
+            }
+            
+            // Update button styles
+            document.querySelectorAll('button[onclick^="switchLanguage"]').forEach(btn => {
+                if (btn.onclick.toString().includes(`'${lang}'`)) {
+                    btn.style.background = '#3B82F6';
+                    btn.style.color = 'white';
+                    btn.style.border = 'none';
+                } else {
+                    btn.style.background = '#1A1A1A';
+                    btn.style.color = '#71717A';
+                    btn.style.border = '1px solid #334155';
+                }
+            });
+        }
+
+        // Update UI with current language
+        function updateUI() {
+            // Update static text
+            const sectionTitle = document.querySelector('.section-title p');
+            if (sectionTitle) {
+                sectionTitle.textContent = translateText("Clicca una notizia per vedere come si espande");
+            }
+            
+            const sidebarHeader = document.querySelector('.sidebar-header');
+            if (sidebarHeader) {
+                sidebarHeader.textContent = translateText("Il Tuo Briefing");
+            }
+            
+            const aiTitle = document.querySelector('.ai-title');
+            if (aiTitle) {
+                aiTitle.textContent = translateText("Chiedi all'Assistente AI");
+            }
+            
+            const aiInput = document.querySelector('.ai-input');
+            if (aiInput) {
+                aiInput.placeholder = translateText("Seleziona una domanda qui sotto per vedere la risposta AI");
+            }
+            
+            // Update news cards
+            const newsCards = document.querySelectorAll('.briefing-card');
+            newsCards.forEach(card => {
+                const titleElement = card.querySelector('.card-title[data-translate]');
+                const metaElement = card.querySelector('.card-meta[data-translate]');
+                
+                if (titleElement) {
+                    const translateKey = titleElement.getAttribute('data-translate');
+                    titleElement.textContent = translateText(translateKey, 'news');
+                }
+                
+                if (metaElement) {
+                    const translateKey = metaElement.getAttribute('data-translate');
+                    metaElement.textContent = translateText(translateKey, 'news');
+                }
+            });
+            
+            // Update section labels
+            const sectionLabels = document.querySelectorAll('.section-label');
+            sectionLabels.forEach(label => {
+                const text = label.textContent.trim();
+                if (text.includes("Resoconto Dettagliato") || text.includes("Detailed Report")) {
+                    label.textContent = translateText("📄 Resoconto Dettagliato");
+                } else if (text.includes("Controversie") || text.includes("Controversies")) {
+                    label.textContent = translateText("⚡ Controversie & Prospettive Multiple");
+                } else if (text.includes("Key Takeaways")) {
+                    label.textContent = translateText("🎯 Key Takeaways");
+                } else if (text.includes("Fonti Primarie") || text.includes("Primary Sources")) {
+                    label.textContent = translateText("📚 Fonti Primarie & Report");
+                } else if (text.includes("Interroga con l'AI") || text.includes("Ask the AI")) {
+                    label.textContent = translateText("🤖 Interroga con l'AI");
+                }
+            });
+        }
+
+        // News translations
+        const newsTranslations = {
+            it: {
+                1: {
+                    title: "EU AI Act entra in vigore — Aziende tech corrono per conformarsi entro agosto 2026",
+                    meta: {
+                        time: "Aggiornato 2h fa",
+                        sources: "4 fonti ufficiali EU",
+                        connections: "8 eventi correlati"
+                    },
+                    detail: `L'AI Act dell'Unione Europea è entrato ufficialmente in vigore il 1° agosto 2024, diventando la prima legislazione completa al mondo per regolamentare l'intelligenza artificiale nei settori pubblico e privato. La normativa adotta un approccio basato sul rischio, classificando i sistemi AI in quattro categorie: rischio inaccettabile (vietati), alto rischio (regolamentati), rischio limitato (obblighi di trasparenza) e rischio minimo (nessun obbligo).
+                    <br><br>
+                    Timeline di implementazione scaglionata: le regole su AI proibite entreranno in vigore a febbraio 2025, mentre i fornitori di sistemi AI ad alto rischio dovranno conformarsi entro agosto 2026. Per i modelli di AI general-purpose (GPAI), inclusi quelli già sul mercato prima di agosto 2025, le regole sono operative da agosto 2025. Le multe per violazioni vanno da €15 milioni o 3% del fatturato globale annuo, fino a €35 milioni o 7% per violazioni gravi come l'uso di tecniche manipolative vietate.`,
+                    takeaways: [
+                        "Entrato in vigore 1 agosto 2024, prima legge completa al mondo sull'AI",
+                        "Approccio risk-based: sistemi proibiti, alto rischio, rischio limitato, rischio minimo",
+                        "Timeline scaglionata: AI proibite da febbraio 2025, alto rischio entro agosto 2026",
+                        "GPAI models: regole operative da agosto 2025, anche per modelli pre-esistenti",
+                        "Multe: €15M o 3% fatturato (standard), fino a €35M o 7% (violazioni gravi)",
+                        "Effetto extraterritoriale: si applica anche ad aziende non-EU che servono mercato europeo"
+                    ],
+                    aiSuggestions: [
+                        "Quali sono i sistemi AI considerati 'ad alto rischio'?",
+                        "Come si applica alle aziende non europee?"
+                    ]
+                },
+                2: {
+                    title: "BRICS Summit in Kazan — Modi, Putin e Xi discutono de-dollarizzazione e nuovo ordine multipolare",
+                    meta: {
+                        time: "2024",
+                        sources: "8 fonti primarie",
+                        connections: "2 prospettive"
+                    },
+                    detail: `Il 16° vertice BRICS si è tenuto a Kazan, Russia, dal 22 al 24 ottobre 2024, segnando il primo summit dopo l'espansione del blocco che ora include Egitto, Etiopia, Iran ed Emirati Arabi Uniti oltre ai membri fondatori (Brasile, Russia, India, Cina, Sudafrica). Hanno partecipato oltre 30 delegazioni e 22 capi di stato o di governo, tra cui il primo ministro indiano Narendra Modi, il presidente russo Vladimir Putin e il leader cinese Xi Jinping.
+                    <br><br>
+                    Focus principale del summit: riduzione della dipendenza dal dollaro USA attraverso l'uso di valute locali nelle transazioni tra paesi BRICS, sviluppo di sistemi di pagamento alternativi e creazione di infrastrutture finanziarie al di fuori del controllo occidentale. Il dollaro attualmente domina il 90% delle transazioni valutarie globali, e i leader BRICS hanno sottolineato la necessità di un sistema finanziario multipolare meno vulnerabile all'influenza di una singola valuta.`,
+                    takeaways: [
+                        "Primo summit BRICS dopo l'espansione: ora include 9 membri (Egitto, Etiopia, Iran, UAE aggiunti a gennaio 2024)",
+                        "Oltre 30 paesi hanno espresso interesse a collaborare o unirsi, tra cui Arabia Saudita e Turchia",
+                        "Dichiarazione finale incoraggia 'uso di valute locali nelle transazioni tra paesi BRICS' ma nessuna valuta comune proposta",
+                        "Discusso sviluppo di sistemi di pagamento alternativi a SWIFT per evitare sanzioni occidentali",
+                        "Analisti scettici: progetti restano vaghi, manca infrastruttura credibile per sfidare davvero il dollaro nel breve termine"
+                    ],
+                    aiSuggestions: [
+                        "Quali sono i punti deboli della posizione BRICS?",
+                        "Confronta le evidenze delle due prospettive"
+                    ]
+                },
+                3: {
+                    title: "NVIDIA Blackwell arriva — 25x più efficiente ma ritardi di produzione preoccupano clienti",
+                    meta: {
+                        time: "Aggiornato 6h fa",
+                        sources: "6 fonti tech",
+                        connections: "2 eventi correlati"
+                    },
+                    detail: `NVIDIA ha annunciato ufficialmente l'architettura Blackwell GPU a marzo 2024, con la piattaforma GB200 che promette performance rivoluzionarie per l'AI generativa. Secondo NVIDIA, il GB200 superchip offre fino a 25x meno consumo energetico e costi rispetto alla generazione precedente (Hopper H100) per l'inferenza di modelli AI con trilioni di parametri. Le performance: 20 petaFLOPS su chip singolo, supporto per modelli fino a 10 trilioni di parametri.
+                    <br><br>
+                    Tuttavia, la produzione ha affrontato sfide significative. Ad agosto 2024, NVIDIA ha confermato ritardi di 3+ mesi a causa di problemi nel design della mask che hanno impattato la resa dei chip. Ulteriori complicazioni: problemi di power delivery, surriscaldamento, complessità dei sistemi di raffreddamento a liquido, e transizione TSMC da CoWoS-S a CoWoS-L. Meta ha pubblicamente dichiarato di non aspettarsi consegne significative nel 2024. NVIDIA prevede ora ramping produttivo significativo nel 2H 2025.`,
+                    takeaways: [
+                        "GB200 promette 25x efficienza energetica, 30x performance inferenza vs Hopper H100",
+                        "Architettura dual-die: 20 petaFLOPS, supporto modelli fino a 10 trilioni parametri",
+                        "Ritardi produzione confermati: agosto 2024 annunciato slittamento 3+ mesi per design flaws",
+                        "Problemi tecnici: power delivery, overheating, raffreddamento liquido, complessità board",
+                        "Meta: non aspetta consegne significative nel 2024; supply 'considerably lower' previsto Q4 2024/H1 2025",
+                        "NVIDIA prevede revenue Blackwell significativo in Q4 2024 nonostante sfide"
+                    ],
+                    aiSuggestions: [
+                        "Quali sono le cause tecniche specifiche dei ritardi?",
+                        "Come si posiziona AMD come alternativa?"
+                    ]
+                }
+            },
+            en: {
+                1: {
+                    title: "EU AI Act comes into force — Tech companies rush to comply by August 2026",
+                    meta: {
+                        time: "Updated 2h ago",
+                        sources: "4 official EU sources",
+                        connections: "8 related events"
+                    },
+                    detail: `The European Union's AI Act officially came into force on August 1, 2024, becoming the world's first comprehensive legislation to regulate artificial intelligence in both public and private sectors. The regulation adopts a risk-based approach, classifying AI systems into four categories: unacceptable risk (prohibited), high risk (regulated), limited risk (transparency obligations), and minimal risk (no obligations).
+                    <br><br>
+                    Staggered implementation timeline: rules on prohibited AI will take effect in February 2025, while providers of high-risk AI systems must comply by August 2026. For general-purpose AI (GPAI) models, including those already on the market before August 2025, the rules are operational from August 2025. Fines for violations range from €15 million or 3% of global annual turnover, up to €35 million or 7% for serious violations such as the use of prohibited manipulative techniques.`,
+                    takeaways: [
+                        "Came into force August 1, 2024, world's first comprehensive AI law",
+                        "Risk-based approach: prohibited, high-risk, limited-risk, minimal-risk systems",
+                        "Staggered timeline: prohibited AI from February 2025, high-risk by August 2026",
+                        "GPAI models: rules operational from August 2025, including pre-existing models",
+                        "Fines: €15M or 3% turnover (standard), up to €35M or 7% (serious violations)",
+                        "Extraterritorial effect: applies to non-EU companies serving European market"
+                    ],
+                    aiSuggestions: [
+                        "What AI systems are considered 'high-risk'?",
+                        "How does it apply to non-European companies?"
+                    ]
+                },
+                2: {
+                    title: "BRICS Summit in Kazan — Modi, Putin and Xi discuss de-dollarization and new multipolar order",
+                    meta: {
+                        time: "2024",
+                        sources: "8 primary sources",
+                        connections: "2 perspectives"
+                    },
+                    detail: `The 16th BRICS summit was held in Kazan, Russia, from October 22-24, 2024, marking the first summit after the bloc's expansion that now includes Egypt, Ethiopia, Iran, and the United Arab Emirates in addition to the founding members (Brazil, Russia, India, China, South Africa). Over 30 delegations and 22 heads of state or government participated, including Indian Prime Minister Narendra Modi, Russian President Vladimir Putin, and Chinese leader Xi Jinping.
+                    <br><br>
+                    Main focus of the summit: reducing dependence on the US dollar through the use of local currencies in transactions between BRICS countries, developing alternative payment systems, and creating financial infrastructure outside Western control. The dollar currently dominates 90% of global foreign exchange transactions, and BRICS leaders emphasized the need for a multipolar financial system less vulnerable to the influence of a single currency.`,
+                    takeaways: [
+                        "First BRICS summit after expansion: now includes 9 members (Egypt, Ethiopia, Iran, UAE added January 2024)",
+                        "Over 30 countries have expressed interest in cooperating or joining, including Saudi Arabia and Turkey",
+                        "Final declaration encourages 'use of local currencies in transactions between BRICS countries' but no common currency proposed",
+                        "Discussed development of alternative payment systems to SWIFT to avoid Western sanctions",
+                        "Skeptical analysts: projects remain vague, lack credible infrastructure to truly challenge the dollar in the short term"
+                    ],
+                    aiSuggestions: [
+                        "What are the weaknesses of the BRICS position?",
+                        "Compare the evidence from both perspectives"
+                    ]
+                },
+                3: {
+                    title: "NVIDIA Blackwell arrives — 25x more efficient but production delays worry customers",
+                    meta: {
+                        time: "Updated 6h ago",
+                        sources: "6 tech sources",
+                        connections: "2 related events"
+                    },
+                    detail: `NVIDIA officially announced the Blackwell GPU architecture in March 2024, with the GB200 platform promising revolutionary performance for generative AI. According to NVIDIA, the GB200 superchip offers up to 25x less energy consumption and costs compared to the previous generation (Hopper H100) for AI model inference with trillions of parameters. Performance: 20 petaFLOPS on a single chip, support for models up to 10 trillion parameters.
+                    <br><br>
+                    However, production has faced significant challenges. In August 2024, NVIDIA confirmed delays of 3+ months due to mask design issues that impacted chip yields. Additional complications: power delivery problems, overheating, complexity of liquid cooling systems, and TSMC's transition from CoWoS-S to CoWoS-L. Meta has publicly stated it does not expect significant deliveries in 2024. NVIDIA now expects significant production ramp-up in 2H 2025.`,
+                    takeaways: [
+                        "GB200 promises 25x energy efficiency, 30x inference performance vs Hopper H100",
+                        "Dual-die architecture: 20 petaFLOPS, support for models up to 10 trillion parameters",
+                        "Production delays confirmed: August 2024 announced 3+ month slippage due to design flaws",
+                        "Technical issues: power delivery, overheating, liquid cooling, board complexity",
+                        "Meta: doesn't expect significant deliveries in 2024; supply 'considerably lower' expected Q4 2024/H1 2025",
+                        "NVIDIA expects significant Blackwell revenue in Q4 2024 despite challenges"
+                    ],
+                    aiSuggestions: [
+                        "What are the specific technical causes of the delays?",
+                        "How does AMD position itself as an alternative?"
+                    ]
+                }
+            }
+        };
+
+        // News data
+        const newsContent = {
+            1: {
+                title: "EU AI Act entra in vigore — Aziende tech corrono per conformarsi entro agosto 2026",
+                meta: {
+                    time: "Aggiornato 2h fa",
+                    sources: "4 fonti ufficiali EU",
+                    connections: "8 eventi correlati"
+                },
+                hasControversy: false,
+                detail: `L'AI Act dell'Unione Europea è entrato ufficialmente in vigore il 1° agosto 2024, diventando la prima legislazione completa al mondo per regolamentare l'intelligenza artificiale nei settori pubblico e privato. La normativa adotta un approccio basato sul rischio, classificando i sistemi AI in quattro categorie: rischio inaccettabile (vietati), alto rischio (regolamentati), rischio limitato (obblighi di trasparenza) e rischio minimo (nessun obbligo).
+                <br><br>
+                Timeline di implementazione scaglionata: le regole su AI proibite entreranno in vigore a febbraio 2025, mentre i fornitori di sistemi AI ad alto rischio dovranno conformarsi entro agosto 2026. Per i modelli di AI general-purpose (GPAI), inclusi quelli già sul mercato prima di agosto 2025, le regole sono operative da agosto 2025. Le multe per violazioni vanno da €15 milioni o 3% del fatturato globale annuo, fino a €35 milioni o 7% per violazioni gravi come l'uso di tecniche manipolative vietate.`,
+                takeaways: [
+                    "Entrato in vigore 1 agosto 2024, prima legge completa al mondo sull'AI",
+                    "Approccio risk-based: sistemi proibiti, alto rischio, rischio limitato, rischio minimo",
+                    "Timeline scaglionata: AI proibite da febbraio 2025, alto rischio entro agosto 2026",
+                    "GPAI models: regole operative da agosto 2025, anche per modelli pre-esistenti",
+                    "Multe: €15M o 3% fatturato (standard), fino a €35M o 7% (violazioni gravi)",
+                    "Effetto extraterritoriale: si applica anche ad aziende non-EU che servono mercato europeo"
+                ],
+                sources: [
+                    { name: "European Commission", short: "EC", type: "Official Source" },
+                    { name: "EU Parliament", short: "EP", type: "Legislative Doc" },
+                    { name: "MIT Sloan Review", short: "MIT", type: "Analysis" },
+                    { name: "Harvard Business Review", short: "HBR", type: "Business Impact" },
+                    { name: "AI Business", short: "AIB", type: "Industry Coverage" },
+                    { name: "Cooley LLP", short: "CLW", type: "Legal Analysis" }
+                ],
+                aiSuggestions: [
+                    "Quali sono i sistemi AI considerati 'ad alto rischio'?",
+                    "Come si applica alle aziende non europee?"
+                ],
+                aiResponses: {
+                    1: `<h3>Quali sono i sistemi AI considerati 'ad alto rischio'?</h3>
+                        <p>L'AI Act identifica i sistemi ad alto rischio attraverso due percorsi principali definiti nell'<a href="https://artificialintelligenceact.eu/article/6/" target="_blank">Articolo 6</a>.</p>
+                        
+                        <p><strong>Primo percorso: AI come componente di sicurezza (Articolo 6(1))</strong></p>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">Un sistema AI è considerato ad alto rischio se soddisfa due condizioni cumulative</a>:</p>
+                        <ol>
+                            <li>È utilizzato come componente di sicurezza di un prodotto (o è esso stesso un prodotto) coperto dalla legislazione UE di armonizzazione elencata nell'Annex I dell'AI Act</li>
+                            <li>La stessa legislazione richiede che il prodotto sia sottoposto a valutazione di conformità da terze parti prima di essere immesso sul mercato UE</li>
+                        </ol>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">L'Annex I contiene oltre 30 direttive e regolamenti, inclusa la legislazione sulla sicurezza di giocattoli, veicoli, aviazione civile, ascensori, apparecchiature radio e dispositivi medici</a>.</p>
+                        
+                        <p><strong>Secondo percorso: Categorie specifiche (Articolo 6(2) e Annex III)</strong></p>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">L'AI Act contiene nell'Annex III un elenco di sistemi AI che devono essere considerati ad alto rischio</a>. <a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrisk-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">L'elenco attualmente include sistemi AI in otto diverse categorie</a>:</p>
+                        <ol>
+                            <li><a href="https://artificialintelligenceact.eu/annex/3/" target="_blank"><strong>Biometria</strong></a>: sistemi di identificazione biometrica remota (esclusi quelli per semplice verifica identitaria), sistemi di categorizzazione biometrica basati su attributi sensibili, sistemi di riconoscimento delle emozioni</li>
+                            <li><a href="https://artificialintelligenceact.eu/annex/3/" target="_blank"><strong>Infrastrutture critiche</strong></a>: sistemi utilizzati come componenti di sicurezza nella gestione di infrastrutture digitali critiche, traffico stradale, forniture energetiche</li>
+                            <li><a href="https://www.aoshearman.com/en/insights/ao-shearman-on-tech/zooming-in-on-ai-10-eu-ai-act-what-are-the-obligations-for-high-risk-ai-systems" target="_blank"><strong>Istruzione e formazione professionale</strong></a>: sistemi per valutazione degli studenti in istituzioni educative</li>
+                            <li><a href="https://www.aoshearman.com/en/insights/ao-shearman-on-tech/zooming-in-on-ai-10-eu-ai-act-what-are-the-obligations-for-high-risk-ai-systems" target="_blank"><strong>Impiego e gestione dei lavoratori</strong></a>: sistemi per reclutamento, valutazione delle performance, allocazione dei compiti</li>
+                            <li><a href="https://www.trail-ml.com/blog/eu-ai-act-how-risk-is-classified" target="_blank"><strong>Accesso a servizi essenziali</strong></a>: sistemi per valutare l'idoneità a prestazioni e servizi pubblici</li>
+                            <li><a href="https://artificialintelligenceact.eu/annex/3/" target="_blank"><strong>Forze dell'ordine</strong></a>: sistemi per valutare il rischio di reato da parte di persone fisiche, profilazione nel corso di indagini penali</li>
+                            <li><a href="https://www.trail-ml.com/blog/eu-ai-act-how-risk-is-classified" target="_blank"><strong>Gestione della migrazione, asilo e controllo delle frontiere</strong></a></li>
+                            <li><a href="https://www.trail-ml.com/blog/eu-ai-act-how-risk-is-classified" target="_blank"><strong>Amministrazione della giustizia</strong></a>: sistemi per assistere autorità giudiziarie</li>
+                        </ol>
+                        
+                        <p><strong>Eccezioni documentate</strong></p>
+                        <p><a href="https://artificialintelligenceact.eu/article/6/" target="_blank">I sistemi elencati nell'Annex III non sono considerati ad alto rischio se non comportano un rischio significativo di danno alla salute, sicurezza o diritti fondamentali</a>. <a href="https://artificialintelligenceact.eu/article/6/" target="_blank">Questa eccezione si applica quando il sistema</a>:</p>
+                        <ul>
+                            <li>È destinato a svolgere un compito procedurale ristretto</li>
+                            <li>È destinato a migliorare il risultato di un'attività umana già completata</li>
+                            <li>È destinato a rilevare pattern decisionali senza sostituire la valutazione umana</li>
+                            <li>È destinato a svolgere un compito preparatorio a una valutazione</li>
+                        </ul>
+                        <p><a href="https://www.wilmerhale.com/en/insights/blogs/wilmerhale-privacy-and-cybersecurity-law/20240717-what-are-highrih-ai-systems-within-the-meaning-of-the-eus-ai-act-and-what-requirements-apply-to-them" target="_blank">Se un fornitore ritiene che il proprio sistema AI non sia ad alto rischio, deve documentare la propria valutazione prima di venderlo o utilizzarlo</a>. <a href="https://artificialintelligenceact.eu/article/6/" target="_blank">La Commissione Europea fornirà linee guida entro febbraio 2026 con esempi pratici di casi d'uso di sistemi AI ad alto rischio e non ad alto rischio</a>.</p>`,
+                    2: `<h3>Come si applica alle aziende non europee?</h3>
+                        <p>L'AI Act ha portata extraterritoriale esplicita, definita nell'<a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">Articolo 2</a>.</p>
+                        
+                        <p><strong>Principio di applicazione extraterritoriale</strong></p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">L'AI Act si applica a fornitori che immettono sul mercato o mettono in servizio sistemi AI o modelli GPAI nell'UE, indipendentemente dal fatto che tali fornitori siano stabiliti o ubicati nell'UE o in un paese terzo</a>.</p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">L'Articolo 2(1)(c) include specificamente fornitori e deployer di sistemi AI che hanno sede o sono ubicati in paesi terzi, quando l'output prodotto dal sistema AI viene utilizzato nell'UE</a>. <a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">Questa giurisdizione basata sull'output è un aspetto chiave della portata extraterritoriale dell'AI Act</a>.</p>
+                        
+                        <p><strong>Quando si applica alle aziende non-UE</strong></p>
+                        <p><a href="https://www.holisticai.com/blog/implications-of-the-eu-ai-act-for-non-eu-leadership-teams" target="_blank">L'AI Act governa il mercato UE, non le aziende fisicamente basate nell'UE</a>. <a href="https://www.holisticai.com/blog/implications-of-the-eu-ai-act-for-non-eu-leadership-teams" target="_blank">Le aziende non-UE che offrono prodotti e servizi AI all'interno del mercato UE rientrano nell'ambito dell'AI Act</a>.</p>
+                        <p><a href="https://www.dlapiper.com/en/insights/publications/2024/02/extra-territorial-application-of-the-ai-act-how-will-it-impact-australian-organisations" target="_blank">L'AI Act si applica alle organizzazioni fuori dall'UE quando</a>:</p>
+                        <ul>
+                            <li>Tali organizzazioni immettono prodotti AI sul mercato o mettono in servizio tali prodotti nell'UE</li>
+                            <li>Rendono disponibili nell'UE gli output prodotti da un prodotto AI</li>
+                        </ul>
+                        <p><a href="https://www.afriwise.com/blog/extraterritorial-application-of-the-eu-ai-act-what-non-eu-companies-should-know" target="_blank">Il principio è radicato nella "ubicazione del mercato": se l'output o l'uso di un sistema AI influisce su persone nell'UE, l'AI Act può applicarsi</a>.</p>
+                        
+                        <p><strong>Esempi pratici documentati</strong></p>
+                        <p><a href="https://www.afriwise.com/blog/extraterritorial-application-of-the-eu-ai-act-what-non-eu-companies-should-know" target="_blank">Casi in cui l'AI Act si applica a aziende non-UE</a>:</p>
+                        <ul>
+                            <li>Un'azienda sudafricana che sviluppa uno strumento AI di reclutamento e lo commercializza a datori di lavoro UE deve conformarsi ai requisiti dell'AI Act per sistemi ad alto rischio, anche se tutto lo sviluppo e l'hosting avvengono fuori dall'UE</li>
+                            <li>Un fornitore mauriziano che offre un servizio di riconoscimento facciale basato su cloud accessibile a clienti UE deve conformarsi perché il servizio è utilizzato nell'UE</li>
+                            <li>Un produttore keniota che vende dispositivi smart home con AI integrata a consumatori UE deve garantire la conformità perché i dispositivi sono immessi sul mercato UE</li>
+                        </ul>
+                        <p><a href="https://www.afriwise.com/blog/extraterritorial-application-of-the-eu-ai-act-what-non-eu-companies-should-know" target="_blank">Caso in cui l'AI Act non si applica</a>: se un'azienda sudafricana importa uno strumento AI da un'azienda francese e lo distribuisce nel mercato sudafricano, non deve conformarsi all'AI Act.</p>
+                        
+                        <p><strong>Requisito del rappresentante autorizzato</strong></p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">I fornitori di sistemi AI ad alto rischio stabiliti in paesi terzi devono nominare un rappresentante autorizzato nell'UE prima di immettere i loro sistemi sul mercato UE</a>.</p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">Un "rappresentante autorizzato" è definito come una persona fisica o giuridica ubicata o stabilita nell'UE che ha ricevuto e accettato un mandato scritto da un fornitore per svolgere per suo conto gli obblighi e le procedure stabilite dall'AI Act</a>.</p>
+                        <p><a href="https://www.williamfry.com/knowledge/a-practical-guide-to-the-extraterritorial-reach-of-the-ai-act/" target="_blank">L'AI Act distingue tra rappresentanti autorizzati per sistemi AI ad alto rischio (Articolo 22) e quelli per modelli GPAI (Articolo 54)</a>.</p>
+                        
+                        <p><strong>Obblighi e sanzioni</strong></p>
+                        <p><a href="https://www.holisticai.com/blog/implications-of-the-eu-ai-act-for-non-eu-leadership-teams" target="_blank">Gli obblighi per aziende dentro e fuori dall'UE sono gli stessi</a>, con l'AI Act che adotta un approccio basato sul rischio per determinare gli obblighi associati a ciascun sistema.</p>
+                        <p><a href="https://www.dlapiper.com/en/insights/publications/2024/02/extra-territorial-application-of-the-ai-act-how-will-it-impact-australian-organisations" target="_blank">Le sanzioni previste includono</a>:</p>
+                        <ul>
+                            <li>Per violazioni relative a sistemi proibiti o a rischio inaccettabile: il maggiore tra 7% del fatturato globale o €35 milioni</li>
+                            <li>Per violazioni di altri obblighi: il maggiore tra 3% del fatturato globale o €15 milioni</li>
+                            <li>Per fornitura di informazioni errate alle autorità: il maggiore tra 1% del fatturato globale o €7,5 milioni</li>
+                        </ul>`
+                }
+            },
+            2: {
+                title: "BRICS Summit in Kazan — Modi, Putin e Xi discutono de-dollarizzazione e nuovo ordine multipolare",
+                meta: {
+                    time: "2024",
+                    sources: "8 fonti primarie",
+                    connections: "2 prospettive"
+                },
+                hasControversy: true,
+                controversyData: {
+                    title: "2 Posizioni Contrastanti",
+                    perspectives: [
+                        {
+                            title: "Favorevoli (Russia, Cina)",
+                            sources: "Putin (Kazan), Dichiarazione BRICS 2024",
+                            argument: '"È essenziale costruire meccanismi finanziari alternativi affidabili e liberi da dettatura" (Putin). "Accogliamo l\'uso di valute locali nelle transazioni tra paesi BRICS" (Dichiarazione Kazan). Argomento: gli USA usano il dollaro come arma attraverso sanzioni e SWIFT.'
+                        },
+                        {
+                            title: "Scettici (Analisti occidentali)",
+                            sources: "Bloomberg, CFR, Voice of America",
+                            argument: '"BRICS de-dollarization dream remains a fantasy" (Bloomberg). "Ambizioni di creare valuta propria affrontano sfide potenzialmente insormontabili" (Council on Foreign Relations). "Analisti esprimono seri dubbi sul successo del sistema di pagamento BRICS" (VOA).'
+                        }
+                    ]
+                },
+                detail: `Il 16° vertice BRICS si è tenuto a Kazan, Russia, dal 22 al 24 ottobre 2024, segnando il primo summit dopo l'espansione del blocco che ora include Egitto, Etiopia, Iran ed Emirati Arabi Uniti oltre ai membri fondatori (Brasile, Russia, India, Cina, Sudafrica). Hanno partecipato oltre 30 delegazioni e 22 capi di stato o di governo, tra cui il primo ministro indiano Narendra Modi, il presidente russo Vladimir Putin e il leader cinese Xi Jinping.
+                <br><br>
+                Focus principale del summit: riduzione della dipendenza dal dollaro USA attraverso l'uso di valute locali nelle transazioni tra paesi BRICS, sviluppo di sistemi di pagamento alternativi e creazione di infrastrutture finanziarie al di fuori del controllo occidentale. Il dollaro attualmente domina il 90% delle transazioni valutarie globali, e i leader BRICS hanno sottolineato la necessità di un sistema finanziario multipolare meno vulnerabile all'influenza di una singola valuta.`,
+                takeaways: [
+                    "Primo summit BRICS dopo l'espansione: ora include 9 membri (Egitto, Etiopia, Iran, UAE aggiunti a gennaio 2024)",
+                    "Oltre 30 paesi hanno espresso interesse a collaborare o unirsi, tra cui Arabia Saudita e Turchia",
+                    "Dichiarazione finale incoraggia 'uso di valute locali nelle transazioni tra paesi BRICS' ma nessuna valuta comune proposta",
+                    "Discusso sviluppo di sistemi di pagamento alternativi a SWIFT per evitare sanzioni occidentali",
+                    "Analisti scettici: progetti restano vaghi, manca infrastruttura credibile per sfidare davvero il dollaro nel breve termine"
+                ],
+                sources: [
+                    { name: "Bloomberg", short: "BL", type: "Analysis - Skeptical" },
+                    { name: "Russia Today", short: "RT", type: "Pro-BRICS" },
+                    { name: "Council on FR", short: "CFR", type: "Skeptical" },
+                    { name: "Voice of America", short: "VOA", type: "Skeptical" },
+                    { name: "Foreign Policy", short: "FP", type: "Neutral-Cautious" },
+                    { name: "Atlantic Council", short: "AC", type: "Pro-significance" }
+                ],
+                aiSuggestions: [
+                    "Quali sono i punti deboli della posizione BRICS?",
+                    "Confronta le evidenze delle due prospettive"
+                ],
+                aiResponses: {
+                    1: `<h3>Quali sono i punti deboli della posizione BRICS?</h3>
+                        <p><strong>1. Divergenza documentata di priorità tra membri</strong></p>
+                        <p>Analisti identificano una divisione: <a href="https://www.thegatewaypundit.com/2024/10/multipolarity-brics-summit-kicks-tomorrow-kazan-36/" target="_blank">"India e Brasile vedono BRICS principalmente come forum economico, mentre Russia e Cina lo considerano più come gruppo geopolitico"</a>.</p>
+                        <p><a href="https://www.csmonitor.com/World/Europe/2024/1024/brics-russia-vladimir-putin-ukraine-war-us-dollar" target="_blank">Christian Science Monitor</a> riporta: "Paesi come Russia e Iran necessitano di un'alternativa; per loro usare valute nazionali è una soluzione tattica, non strategica. Altri paesi come il Brasile commerciano nel gruppo principalmente con la Cina, e non hanno tale bisogno immediato".</p>
+                        <p>Tensioni bilaterali: <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">Jim O'Neill</a>, che ha coniato il termine BRIC nel 2001, ha definito l'idea di una valuta comune "ridicola", citando la relazione tumultuosa tra India e Cina. <a href="https://www.csmonitor.com/World/Europe/2024/1024/brics-russia-vladimir-putin-ukraine-war-us-dollar" target="_blank">India e Cina hanno finalizzato un accordo sul confine disputato solo durante il summit di Kazan</a>.</p>
+                        
+                        <p><strong>2. Assenza di infrastruttura tecnica operativa</strong></p>
+                        <p><a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Eva Seiwert del Mercator Institute for China Studies</a> afferma: "C'è ancora molta strada prima che BRICS possa lanciare un sistema di pagamento trattabile come alternativa seria a SWIFT".</p>
+                        <p>La dichiarazione di Kazan è stata valutata come <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">"vaga anche sulla versione più mite chiamata BRICS Cross-Border Payments Initiative (BCBPI)"</a>.</p>
+                        <p>Problemi tecnici identificati: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Gopal Tripathy, responsabile Treasury presso Jana Small Finance Bank</a>: "Come gestire le fluttuazioni valutarie se viene stabilito un sistema di pagamento alternativo? Potrebbero usare il USD come valuta di riferimento. In tal caso, l'intero scopo di allontanarsi dal dollaro è perso".</p>
+                        <p>Limitazioni operative: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">"Aziende in India, Cina, Sud Africa e Brasile potrebbero trovare difficile effettuare e ricevere pagamenti con partner commerciali in paesi fuori dal club BRICS"</a>.</p>
+                        
+                        <p><strong>3. Requisiti istituzionali assenti</strong></p>
+                        <p><a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Council on Foreign Relations</a> documenta: "Una valuta BRICS richiederebbe compromessi politici maggiori, inclusa un'unione bancaria, un'unione fiscale e convergenza macroeconomica generale... molti esperti dubitano che una nuova valuta di riserva BRICS sarebbe abbastanza stabile o affidabile da essere ampiamente fidata per transazioni globali".</p>
+                        <p><a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">Enoch Godongwana, ministro delle finanze sudafricano</a>: "Creare una valuta comune presuppone istituire una banca centrale, e ciò presuppone perdere indipendenza sulle politiche monetarie, e non penso che alcun paese sia pronto per questo".</p>
+                        
+                        <p><strong>4. Dominio persistente del dollaro USA nei dati</strong></p>
+                        <p>Dati sulle transazioni: <a href="https://responsiblestatecraft.org/dedollarization-china-russia/" target="_blank">Il dollaro è coinvolto nel 90% delle transazioni di cambio valutario globali</a>.</p>
+                        <p>Dati sulle riserve: <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">59% delle riserve valutarie ufficiali globali sono in dollari (Q1 2023)</a>, contro <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">2,5% per il renminbi cinese</a>.</p>
+                        
+                        <p><strong>5. Contraddizioni pratiche osservate</strong></p>
+                        <p><a href="https://www.bloomberg.com/news/newsletters/2024-10-26/bloomberg-new-economy-why-brics-de-dollarization-dream-remains-a-fantasy" target="_blank">Bloomberg ha documentato che al summit di Kazan "gli organizzatori hanno consigliato ai partecipanti di portare dollari (o euro). Le carte Visa non-russe non funzioneranno, hanno aggiunto"</a>.</p>
+                        <p>Questi elementi rappresentano i punti deboli documentati nelle analisi della posizione BRICS sulla de-dollarizzazione.</p>`,
+                    2: `<h3>Confronta le evidenze delle due prospettive</h3>
+                        <p><strong>Evidenze presentate dalla prospettiva favorevole (Russia, Cina):</strong></p>
+                        <p>La posizione favorevole si basa su dati di partecipazione e sviluppi concreti. <a href="https://www.peoplesworld.org/article/brics-summit-in-kazan-is-evidence-of-the-fast-emerging-multipolar-world/" target="_blank">Il summit di Kazan ha visto la presenza di 36 delegazioni e 22 capi di stato o di governo</a>, indicando un interesse ampio verso il forum.</p>
+                        <p>Sul piano valutario, citano un declino della quota dollaro: <a href="https://foreignpolicy.com/2023/04/24/brics-currency-end-dollar-dominance-united-states-russia-china/" target="_blank">da circa 90% a 84,3% delle transazioni di cambio globali</a>, e <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">dalle riserve globali dal 70% (anno 2000) al 59% (Q1 2023)</a>.</p>
+                        <p>Implementazioni operative: <a href="https://www.csmonitor.com/World/Europe/2024/1024/brics-russia-vladimir-putin-ukraine-war-us-dollar" target="_blank">Russia e Cina conducono la maggior parte del commercio bilaterale in rubli e yuan</a>. <a href="https://en.wikipedia.org/wiki/16th_BRICS_summit" target="_blank">È stato annunciato BRICS Pay</a>, un sistema di pagamento per transazioni tra membri. <a href="https://www.peoplesworld.org/article/brics-summit-in-kazan-is-evidence-of-the-fast-emerging-multipolar-world/" target="_blank">La dichiarazione finale di Kazan include: "Accogliamo l'uso di valute locali nelle transazioni tra paesi BRICS"</a>.</p>
+                        
+                        <p><strong>Evidenze presentate dalla prospettiva scettica (analisti occidentali):</strong></p>
+                        <p>La posizione scettica presenta dati su ostacoli strutturali e contraddizioni pratiche. <a href="https://www.bloomberg.com/news/newsletters/2024-10-26/bloomberg-new-economy-why-brics-de-dollarization-dream-remains-a-fantasy" target="_blank">Bloomberg</a> ha riportato che gli organizzatori del summit di Kazan hanno consigliato ai partecipanti di portare dollari o euro, con carte Visa non-russe non funzionanti.</p>
+                        <p>Sul piano istituzionale: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Il Council on Foreign Relations</a> afferma che "una valuta BRICS richiederebbe compromessi politici maggiori, inclusa un'unione bancaria, un'unione fiscale e convergenza macroeconomica generale". <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">Il ministro delle finanze sudafricano Enoch Godongwana</a> ha dichiarato: "Nessuno ha proposto una valuta BRICS, nemmeno in riunioni informali".</p>
+                        <p>Sfide tecniche documentate: <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Analisti della Mercator Institute</a> evidenziano la vaghezza della dichiarazione di Kazan anche sulla versione più limitata (BRICS Cross-Border Payments Initiative). <a href="https://www.voanews.com/a/brics-de-dollarization-agenda-has-a-long-way-to-go/7840686.html" target="_blank">Un esperto bancario indiano</a> chiede: "Come gestire le fluttuazioni valutarie? Potrebbero usare il dollaro USD come valuta di riferimento—in quel caso, l'intero scopo di allontanarsi dal dollaro è perso".</p>
+                        <p>Dato comparativo sulle valute: <a href="https://fortune.com/europe/2023/08/24/brics-new-6-nations-threat-dollar-de-dollarization/" target="_blank">Il renminbi rappresenta il 2,5% delle riserve valutarie globali</a>, contro il 59% del dollaro.</p>
+                        
+                        <p><strong>Aree di sovrapposizione e divergenza:</strong></p>
+                        <p>Entrambe le prospettive concordano che:</p>
+                        <ul>
+                            <li>Il dollaro sta gradualmente perdendo quota nelle transazioni globali</li>
+                            <li>Esistono esempi funzionanti di commercio bilaterale in valute locali</li>
+                            <li>I BRICS hanno dichiarato l'intenzione di ridurre la dipendenza dal dollaro</li>
+                        </ul>
+                        <p>Le prospettive divergono su:</p>
+                        <ul>
+                            <li>Fattibilità tecnica: favorevoli citano progressi e intenzioni; scettici citano assenza di infrastruttura credibile</li>
+                            <li>Timeline: favorevoli presentano il processo come in corso; scettici indicano ostacoli strutturali che richiederebbero decenni</li>
+                            <li>Coesione interna: favorevoli enfatizzano la dichiarazione comune; scettici evidenziano divergenze dichiarate (es. Sud Africa sulla valuta comune)</li>
+                        </ul>`,
+                }
+            },
+            3: {
+                title: "NVIDIA Blackwell arriva — 25x più efficiente ma ritardi di produzione preoccupano clienti",
+                meta: {
+                    time: "Aggiornato 6h fa",
+                    sources: "6 fonti tech",
+                    connections: "2 eventi correlati"
+                },
+                hasControversy: true,
+                controversyData: {
+                    title: "Performance vs Produzione",
+                    perspectives: [
+                        {
+                            title: "NVIDIA e Ottimisti",
+                            sources: "NVIDIA official, investitori long-term",
+                            argument: "Performance rivoluzionarie che giustificano l'attesa. 25x efficienza energetica, 30x performance inferenza su Hopper. Ritardi sono normali per architetture così avanzate. Demand è altissimo (multi-miliardi di ordini). Revenue Blackwell previsto significativo in Q4 2024 nonostante ritardi."
+                        },
+                        {
+                            title: "Analisti Preoccupati",
+                            sources: "SemiAnalysis, The Information, clienti hyperscaler",
+                            argument: "Problemi di design più profondi del previsto: power delivery, overheating, complessità board. Supply sarà 'considerably lower' in Q4 2024 e H1 2025. Meta non si aspetta consegne nel 2024. Clienti potrebbero considerare alternative (AMD MI300). Ritardi costano opportunità in mercato AI in rapida crescita."
+                        }
+                    ]
+                },
+                detail: `NVIDIA ha annunciato ufficialmente l'architettura Blackwell GPU a marzo 2024, con la piattaforma GB200 che promette performance rivoluzionarie per l'AI generativa. Secondo NVIDIA, il GB200 superchip offre fino a 25x meno consumo energetico e costi rispetto alla generazione precedente (Hopper H100) per l'inferenza di modelli AI con trilioni di parametri. Le performance: 20 petaFLOPS su chip singolo, supporto per modelli fino a 10 trilioni di parametri.
+                <br><br>
+                Tuttavia, la produzione ha affrontato sfide significative. Ad agosto 2024, NVIDIA ha confermato ritardi di 3+ mesi a causa di problemi nel design della mask che hanno impattato la resa dei chip. Ulteriori complicazioni: problemi di power delivery, surriscaldamento, complessità dei sistemi di raffreddamento a liquido, e transizione TSMC da CoWoS-S a CoWoS-L. Meta ha pubblicamente dichiarato di non aspettarsi consegne significative nel 2024. NVIDIA prevede ora ramping produttivo significativo nel 2H 2025.`,
+                takeaways: [
+                    "GB200 promette 25x efficienza energetica, 30x performance inferenza vs Hopper H100",
+                    "Architettura dual-die: 20 petaFLOPS, supporto modelli fino a 10 trilioni parametri",
+                    "Ritardi produzione confermati: agosto 2024 annunciato slittamento 3+ mesi per design flaws",
+                    "Problemi tecnici: power delivery, overheating, raffreddamento liquido, complessità board",
+                    "Meta: non aspetta consegne significative nel 2024; supply 'considerably lower' previsto Q4 2024/H1 2025",
+                    "NVIDIA prevede revenue Blackwell significativo in Q4 2024 nonostante sfide"
+                ],
+                sources: [
+                    { name: "NVIDIA Official", short: "NV", type: "Primary Source" },
+                    { name: "The Information", short: "TI", type: "Investigation" },
+                    { name: "SemiAnalysis", short: "SA", type: "Supply Chain" },
+                    { name: "Tom's Hardware", short: "TH", type: "Tech Coverage" },
+                    { name: "The Register", short: "TR", type: "Tech News" },
+                    { name: "Seeking Alpha", short: "SK", type: "Financial Analysis" }
+                ],
+                aiSuggestions: [
+                    "Quali sono le cause tecniche specifiche dei ritardi?",
+                    "Come si posiziona AMD come alternativa?"
+                ],
+                aiResponses: {
+                    1: `<h3>Quali sono le cause tecniche specifiche dei ritardi?</h3>
+                        <p>I ritardi di Blackwell derivano da problemi su tre livelli: design del chip, packaging avanzato e complessità dei sistemi.</p>
+                        
+                        <p><strong>Problemi di design del chip</strong></p>
+                        <p>Il problema principale riguarda <a href="https://www.datacenterdynamics.com/en/news/nvidia-delays-blackwell-gpus-impacting-hyperscaler-data-center-plans-report/" target="_blank">il die che connette due GPU Blackwell nel GB200</a>. TSMC ha scoperto il difetto durante la produzione, richiedendo a NVIDIA di modificare il design e condurre nuovi test prima della produzione di massa.</p>
+                        <p><a href="https://www.theregister.com/2024/08/05/nvidia_delays_blackwell_gpus_until/" target="_blank">SemiAnalysis ha identificato che i ritardi richiedono un redesign dei bridge dies, insieme a un redesign dei layer metallici di routing globale superiori e del bump out del die Blackwell stesso</a>. <a href="https://www.trendforce.com/news/2024/09/10/news-nvidias-blackwell-overcomes-delays-as-gb200-reportedly-sets-for-december-mass-production/" target="_blank">Commercial Times ha riportato che il chip Blackwell affrontava instabilità nei layer metallici durante il processo HV, problema poi risolto entro luglio</a>. <a href="https://www.trendforce.com/news/2024/09/10/news-nvidias-blackwell-overcomes-delays-as-gb200-reportedly-sets-for-december-mass-production/" target="_blank">NVIDIA ha successivamente eseguito modifiche alla mask GPU a 6 layer della serie Blackwell</a>, permettendo al processo di procedere senza re-taping out completo.</p>
+                        
+                        <p><strong>Problemi di packaging CoWoS-L</strong></p>
+                        <p>Blackwell è <a href="https://www.theregister.com/2024/08/05/nvidia_delays_blackwell_gpus_until/" target="_blank">il primo design ad alto volume che utilizza la tecnologia di packaging CoWoS-L di TSMC</a>. Questa tecnologia è più complessa della precedente CoWoS-S: <a href="https://newsletter.semianalysis.com/p/nvidias-blackwell-reworked-shipment" target="_blank">CoWoS-L usa un interposer RDL con interconnessioni in silicio locali (LSI) e bridge dies integrati per collegare compute e memoria</a>.</p>
+                        <p><a href="https://www.fierceelectronics.com/ai/heres-whats-wrong-nvidias-blackwell-gpu" target="_blank">SemiAnalysis ha documentato problemi con CoWoS-L relativi a warpage tra die di silicio, bridges e substrate</a>. La transizione da CoWoS-S a CoWoS-L crea ulteriori difficoltà: <a href="https://www.theregister.com/2024/08/05/nvidia_delays_blackwell_gpus_until/" target="_blank">TSMC ha costruito molta capacità CoWoS-S negli ultimi anni principalmente per NVIDIA, ma ora deve convertire questa capacità a CoWoS-L mentre costruisce un nuovo fab (AP6) dedicato</a>. Questo processo di conversione rende la rampa produttiva "molto irregolare".</p>
+                        
+                        <p><strong>Problemi a livello di sistema</strong></p>
+                        <p>Il GB200 rappresenta <a href="https://semianalysis.com/2024/08/04/nvidias-blackwell-reworked-shipment/" target="_blank">il chip tecnicamente più avanzato della famiglia Blackwell</a>, con <a href="https://semianalysis.com/2024/08/04/nvidias-blackwell-reworked-shipment/" target="_blank">un rack da 72 GPU che ha una densità di potenza di ~125 kW per rack, contro lo standard datacenter di ~12-20 kW</a>. Questa densità senza precedenti ha generato <a href="https://semianalysis.com/2024/08/04/nvidias-blackwell-reworked-shipment/" target="_blank">numerosi problemi relativi a power delivery, surriscaldamento, rampa della supply chain per raffreddamento a liquido, perdite d'acqua dai quick disconnect e varie sfide di complessità del board</a>.</p>
+                        <p>A dicembre 2024, <a href="https://www.trendforce.com/news/2024/12/02/news-production-hurdles-for-gb200-spark-rumors-of-microsoft-cutting-orders/" target="_blank">TrendForce ha riportato nuovi ostacoli tecnici nel design della connessione backplane, con yield di test per i connettori cartridge forniti da Amphenol risultati subottimali</a>, potenzialmente ritardando la produzione di massa fino a marzo 2025. <a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/nvidia-gb200-production-ramps-up-after-suppliers-tackle-ai-server-overheating-and-liquid-cooling-leaks" target="_blank">Tom's Hardware ha documentato che i fornitori inclusi Foxconn, Inventec, Dell e Wistron hanno riportato problemi di connettività durante i test interni</a>, richiedendo collaborazione con NVIDIA due o tre mesi fa.</p>`,
+                    2: `<h3>Come si posiziona AMD come alternativa?</h3>
+                        <p>AMD ha lanciato la serie MI300 come alternativa diretta a NVIDIA, con risultati tecnici competitivi ma sfide di ecosistema.</p>
+                        
+                        <p><strong>Performance comparativa documentata</strong></p>
+                        <p>I primi benchmark MLPerf Inference v4.1 mostrano competitività tra <a href="https://www.nextplatform.com/2024/09/03/the-first-ai-benchmarks-pitting-amd-against-nvidia/" target="_blank">MI300X e H100 per il modello Llama 2 70B</a>. <a href="https://www.nextplatform.com/2024/09/03/the-first-ai-benchmarks-pitting-amd-against-nvidia/" target="_blank">Next Platform ha analizzato che l'MI300X è assolutamente competitivo con l'H100 di NVIDIA su un set di benchmark di inferenza AI</a>, e può essere competitivo anche con H100 e H200 in termini di costi.</p>
+                        <p><a href="https://www.tomshardware.com/pc-components/cpus/amd-unveils-instinct-mi300x-gpu-and-mi300a-apu-claims-up-to-16x-lead-over-nvidias-competing-gpus" target="_blank">AMD afferma che l'MI300X offre fino a 1,6X più performance dell'H100 in workload di inferenza AI</a>, con <a href="https://www.tomshardware.com/pc-components/cpus/amd-unveils-instinct-mi300x-gpu-and-mi300a-apu-claims-up-to-16x-lead-over-nvidias-competing-gpus" target="_blank">192 GB di memoria HBM3 contro gli 80 GB dell'H100 base</a>, permettendo di supportare il doppio dei modelli LLM per sistema.</p>
+                        
+                        <p><strong>Roadmap prodotti</strong></p>
+                        <p><a href="https://analyticsindiamag.com/global-tech/amd-is-finally-catching-up-with-nvidia-blackwell/" target="_blank">La CEO di AMD Lisa Su ha dichiarato il 30 ottobre che l'MI325 è un prodotto "game-changing" che competerà contro l'H200 di NVIDIA, mentre la serie MI350 competerà contro Blackwell</a>. <a href="https://analyticsindiamag.com/global-tech/amd-is-finally-catching-up-with-nvidia-blackwell/" target="_blank">Su ha affermato che la serie MI350 è "on track per il lancio nella seconda metà del 2025 con il più grande aumento generazionale di performance AI mai consegnato"</a>.</p>
+                        
+                        <p><strong>Adozione da parte degli hyperscaler</strong></p>
+                        <p><a href="https://ts2.tech/en/nvidia-blackwell-b200-vs-amd-mi350-vs-google-tpu-v6e-2025s-ultimate-ai-accelerator-showdown/" target="_blank">Microsoft Azure ha annunciato l'intenzione di offrire VM con serie MI300</a>, con l'MI350 che seguirà se le performance si dimostrano valide. Ci sono <a href="https://ts2.tech/en/nvidia-blackwell-b200-vs-amd-mi350-vs-google-tpu-v6e-2025s-ultimate-ai-accelerator-showdown/" target="_blank">report di Meta che valuta MI300/MI350 per la propria infrastruttura AI</a>, anche se Meta ha storicamente usato principalmente NVIDIA.</p>
+                        <p><a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">SemiAnalysis documenta che tutti gli hyperscaler sono attesi deployare l'MI355 e molti procederanno anche con la soluzione rack-scale MI400</a>.</p>
+                        
+                        <p><strong>Sfide dell'ecosistema</strong></p>
+                        <p><a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">Una delle principali sfide nell'aumentare l'adozione AMD è che attualmente esistono pochissimi Neoclouds focalizzati su AMD rispetto a oltre cento focalizzati su NVIDIA</a>. Questa scarsità porta a <a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">prezzi artificialmente alti per il noleggio di GPU AMD, erodendo la competitività di costo complessiva</a>.</p>
+                        <p>Nel Q2 2025, <a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">i contratti a un mese per H200 costavano circa $2,50/ora/GPU, mentre i contratti per MI300X erano allo stesso prezzo, rendendo l'MI300X non competitivo rispetto all'H200</a>. Per inference reasoning, <a href="https://semianalysis.com/2025/06/13/amd-advancing-ai-mi350x-and-mi400-ualoe72-mi500-ual256/" target="_blank">l'MI300X necessita di un prezzo sotto $2,10-2,40/ora per essere competitivo in performance per dollaro con l'H200</a>.</p>
+                        
+                        <p><strong>Vantaggi economici</strong></p>
+                        <p>Il confronto di costi mostra differenze significative: <a href="https://ai-stack.ai/en/blackwell-vs-mi300x" target="_blank">pod Blackwell DGX costano circa $9M con potenza di ~360 kW, mentre pod MI300X costano circa $3M con potenza di ~192 kW</a>. Su un ciclo di ammortamento di cinque anni, questa differenza diventa rilevante per i decision-maker di alto livello.</p>
+                        
+                        <p><strong>Maturazione software</strong></p>
+                        <p><a href="https://www.storagereview.com/news/mlperf-inference-v5-1-nvidia-blackwell-ultra-vs-amd-instinct-platforms/" target="_blank">Next Platform nota che "i giorni in cui si guardavano solo le GPU verdi potrebbero essere finiti—ROCm sta maturando e MI300 è praticabile in deployment di inferenza reali"</a>. <a href="https://ai-stack.ai/en/blackwell-vs-mi300x" target="_blank">Il recente "upstream first sprint" di AMD ha ridotto il gap; un singolo comando Docker pull ora installa un runtime vLLM completamente ottimizzato per MI300X</a>.</p>
+                        <p>Tuttavia, CUDA mantiene <a href="https://ai-stack.ai/en/blackwell-vs-mi300x" target="_blank">il percorso più ricco e a più bassa sintonia per raggiungere numeri di picco</a>, specialmente per kernel proprietari come Paged-Attention o il Transformer Engine 2 di NVIDIA.</p>`
+                }
+            }
+        };
+
+        // Handle card clicks
+        function updateDetailPanel(newsId) {
+            const news = newsContent[newsId];
+            
+            if (!news) {
+                console.error('News not found for ID:', newsId);
+                return;
+            }
+            
+            // Check if detail panel exists
+            const detailPanel = document.getElementById('detailPanel');
+            if (!detailPanel) {
+                console.error('Detail panel not found!');
+                return;
+            }
+            
+            // Use original news content (translations are handled separately)
+            const displayNews = news;
+            
+            // Update header with translations
+            const titleKey = `news${newsId}.title`;
+            const translatedTitle = translateText(titleKey, 'news') || displayNews.title;
+            
+            const titleElement = document.querySelector('.detail-title');
+            if (titleElement) {
+                titleElement.textContent = translatedTitle;
+            } else {
+                console.error('Title element not found');
+            }
+            // Get translated meta information
+            const metaKey = `news${newsId}.meta`;
+            const translatedMeta = translateText(metaKey, 'news');
+            
+            const metaElement = document.querySelector('.detail-meta');
+            if (metaElement) {
+                if (translatedMeta && translatedMeta !== metaKey) {
+                    // Use translated meta if available
+                    metaElement.innerHTML = `<span>${translatedMeta}</span>`;
+                } else {
+                    // Fallback to original meta structure
+                    metaElement.innerHTML = `
+                        <span>${displayNews.meta.time}</span>
+                        <span>${displayNews.meta.sources}</span>
+                        <span>${displayNews.meta.connections}</span>
+                    `;
+                }
+            } else {
+                console.error('Meta element not found');
+            }
+
+            // Update detail text with translations
+            const detailKey = `news${newsId}.detail`;
+            const translatedDetail = translateText(detailKey, 'news');
+            
+            const detailElement = document.querySelector('.detail-text');
+            if (detailElement) {
+                if (translatedDetail && translatedDetail !== detailKey) {
+                    detailElement.innerHTML = translatedDetail;
+                } else {
+                    detailElement.innerHTML = displayNews.detail;
+                }
+            } else {
+                console.error('Detail element not found');
+            }
+
+            // Update or hide controversy section
+            const controversySection = document.querySelectorAll('.detail-section')[1];
+            if (news.hasControversy && controversySection) {
+                controversySection.style.display = 'block';
+                
+                        // Update controversy content if present
+                        if (news.controversyData) {
+                            const controversyBox = controversySection.querySelector('.controversy-box');
+                            if (controversyBox) {
+                                const header = controversyBox.querySelector('.controversy-header');
+                                if (header) {
+                                    // Get controversy title based on news type
+                                    let controversyTitleKey = '';
+                                    if (newsId === 2) {
+                                        controversyTitleKey = 'brics.title';
+                                    } else if (newsId === 3) {
+                                        controversyTitleKey = 'nvidia.title';
+                                    }
+                                    const controversyTitle = translateText(controversyTitleKey, 'controversy');
+                                    header.innerHTML = `<span>⚡</span><span>${controversyTitle.toUpperCase()}</span>`;
+                                }
+                                
+                                const grid = controversyBox.querySelector('.perspectives-grid');
+                                if (grid) {
+                                    // Get perspective titles and sources based on news type
+                                    let perspective1TitleKey = '', perspective1SourcesKey = '';
+                                    let perspective2TitleKey = '', perspective2SourcesKey = '';
+                                    
+                                    if (newsId === 2) {
+                                        perspective1TitleKey = 'brics.favorable.title';
+                                        perspective1SourcesKey = 'brics.favorable.sources';
+                                        perspective2TitleKey = 'brics.skeptical.title';
+                                        perspective2SourcesKey = 'brics.skeptical.sources';
+                                    } else if (newsId === 3) {
+                                        perspective1TitleKey = 'nvidia.optimistic.title';
+                                        perspective1SourcesKey = 'nvidia.optimistic.sources';
+                                        perspective2TitleKey = 'nvidia.concerned.title';
+                                        perspective2SourcesKey = 'nvidia.concerned.sources';
+                                    }
+                                    
+                                    // Get argument keys based on news type
+                                    let perspective1ArgumentKey = '', perspective2ArgumentKey = '';
+                                    
+                                    if (newsId === 2) {
+                                        perspective1ArgumentKey = 'brics.favorable.argument';
+                                        perspective2ArgumentKey = 'brics.skeptical.argument';
+                                    } else if (newsId === 3) {
+                                        perspective1ArgumentKey = 'nvidia.optimistic.argument';
+                                        perspective2ArgumentKey = 'nvidia.concerned.argument';
+                                    }
+                                    
+                                    grid.innerHTML = `
+                                        <div class="perspective">
+                                            <div class="perspective-title">${translateText(perspective1TitleKey, 'controversy')}</div>
+                                            <div class="perspective-sources">${translateText(perspective1SourcesKey, 'controversy')}</div>
+                                            <div class="perspective-arg">${translateText(perspective1ArgumentKey, 'controversy')}</div>
+                                        </div>
+                                        <div class="vs-divider">vs</div>
+                                        <div class="perspective">
+                                            <div class="perspective-title">${translateText(perspective2TitleKey, 'controversy')}</div>
+                                            <div class="perspective-sources">${translateText(perspective2SourcesKey, 'controversy')}</div>
+                                            <div class="perspective-arg">${translateText(perspective2ArgumentKey, 'controversy')}</div>
+                                        </div>
+                                    `;
+                                }
+                                
+                                // Update mobile controversy layout
+                                const mobileContainer = controversyBox.querySelector('.perspectives-mobile-container');
+                                if (mobileContainer) {
+                                    // Get perspective titles and sources based on news type
+                                    let perspective1TitleKey = '', perspective1SourcesKey = '';
+                                    let perspective2TitleKey = '', perspective2SourcesKey = '';
+                                    
+                                    if (newsId === 2) {
+                                        perspective1TitleKey = 'brics.favorable.title';
+                                        perspective1SourcesKey = 'brics.favorable.sources';
+                                        perspective2TitleKey = 'brics.skeptical.title';
+                                        perspective2SourcesKey = 'brics.skeptical.sources';
+                                    } else if (newsId === 3) {
+                                        perspective1TitleKey = 'nvidia.optimistic.title';
+                                        perspective1SourcesKey = 'nvidia.optimistic.sources';
+                                        perspective2TitleKey = 'nvidia.concerned.title';
+                                        perspective2SourcesKey = 'nvidia.concerned.sources';
+                                    }
+                                    
+                                    // Get argument keys based on news type
+                                    let perspective1ArgumentKey = '', perspective2ArgumentKey = '';
+                                    
+                                    if (newsId === 2) {
+                                        perspective1ArgumentKey = 'brics.favorable.argument';
+                                        perspective2ArgumentKey = 'brics.skeptical.argument';
+                                    } else if (newsId === 3) {
+                                        perspective1ArgumentKey = 'nvidia.optimistic.argument';
+                                        perspective2ArgumentKey = 'nvidia.concerned.argument';
+                                    }
+                                    
+                                    mobileContainer.innerHTML = `
+                                        <div class="perspective-mobile">
+                                            <div class="perspective-title">${translateText(perspective1TitleKey, 'controversy')}</div>
+                                            <div class="perspective-sources">${translateText(perspective1SourcesKey, 'controversy')}</div>
+                                            <div class="perspective-arg">${translateText(perspective1ArgumentKey, 'controversy')}</div>
+                                        </div>
+                                        <div class="perspective-mobile">
+                                            <div class="perspective-title">${translateText(perspective2TitleKey, 'controversy')}</div>
+                                            <div class="perspective-sources">${translateText(perspective2SourcesKey, 'controversy')}</div>
+                                            <div class="perspective-arg">${translateText(perspective2ArgumentKey, 'controversy')}</div>
+                                        </div>
+                                    `;
+                                }
+                            }
+                        }
+            } else if (controversySection) {
+                controversySection.style.display = 'none';
+            }
+
+            // Update takeaways
+            const takeawaysList = document.querySelector('.takeaways-list');
+            if (takeawaysList && displayNews.takeaways) {
+                takeawaysList.innerHTML = displayNews.takeaways.map(item => `<li>${item}</li>`).join('');
+            }
+
+            // Update sources
+            const sourcesSlider = document.querySelector('.sources-slider');
+            if (sourcesSlider && news.sources) {
+                sourcesSlider.innerHTML = news.sources.map(source => `
+                    <div class="source-card">
+                        <div class="source-logo">${source.short}</div>
+                        <div class="source-name">${source.name}</div>
+                        <div class="source-type">${source.type}</div>
+                    </div>
+                `).join('');
+            }
+
+            // Update AI suggestions
+            const aiSuggestions = document.querySelector('.ai-suggestions');
+            if (aiSuggestions && displayNews.aiSuggestions) {
+                aiSuggestions.innerHTML = displayNews.aiSuggestions.map((suggestion, index) => `
+                    <div class="ai-suggestion" data-question="${index + 1}">${suggestion}</div>
+                `).join('');
+            }
+
+            // Hide AI response when switching news
+            const aiResponse = document.getElementById('aiResponse');
+            if (aiResponse) {
+                aiResponse.classList.remove('visible');
+            }
+
+            // Reset AI input
+            const aiInput = document.querySelector('.ai-input');
+            if (aiInput) {
+                aiInput.value = '';
+            }
+        }
+
+
+        // AI suggestion clicks - handle both click and touch events for mobile
+        function handleAISuggestionClick(e) {
+            if (e.target.classList.contains('ai-suggestion')) {
+                e.preventDefault(); // Prevent default to avoid double-firing
+                
+                const questionId = e.target.getAttribute('data-question');
+                const aiInput = document.querySelector('.ai-input');
+                const aiResponse = document.getElementById('aiResponse');
+                const aiResponseContent = document.getElementById('aiResponseContent');
+                
+                // Update input with selected question
+                if (aiInput) {
+                    aiInput.value = e.target.textContent;
+                }
+                
+                // Get current news data
+                const activeCard = document.querySelector('.briefing-card.active');
+                if (activeCard) {
+                    const newsId = parseInt(activeCard.getAttribute('data-news'));
+                    const news = newsContent[newsId];
+                    
+                    if (news && news.aiResponses && news.aiResponses[questionId]) {
+                        // Get translated AI response
+                        const responseKey = `news${newsId}.q${questionId}`;
+                        const translatedResponse = translateText(responseKey, 'aiResponses');
+                        
+                        // Show AI response (use translated version if available, otherwise fallback to original)
+                        aiResponseContent.innerHTML = translatedResponse || news.aiResponses[questionId];
+                        aiResponse.classList.add('visible');
+                        
+                        // Scroll to AI response
+                        setTimeout(() => {
+                            aiResponse.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }, 100);
+                    }
+                }
+            }
+        }
+        
+        document.addEventListener('click', handleAISuggestionClick);
+        document.addEventListener('touchstart', handleAISuggestionClick, { passive: false });
+
+        // Initialize with news 2 (BRICS) when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Initialize card selection and event listeners
+            const cards = document.querySelectorAll('.briefing-card');
+            const detailPanel = document.getElementById('detailPanel');
+            
+            // Add click event listeners to cards
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const newsId = parseInt(card.getAttribute('data-news'));
+                    
+                    // Remove active from all cards
+                    cards.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active to clicked card
+                    card.classList.add('active');
+                    
+                    // Animate detail panel
+                    detailPanel.style.opacity = '0';
+                    detailPanel.style.transform = 'translateX(20px)';
+                    
+                    setTimeout(() => {
+                        // Update content
+                        updateDetailPanel(newsId);
+                        
+                        // Reset animations for detail sections
+                        const sections = detailPanel.querySelectorAll('.detail-section');
+                        sections.forEach(section => {
+                            section.style.animation = 'none';
+                            setTimeout(() => {
+                                section.style.animation = '';
+                            }, 10);
+                        });
+                        
+                        detailPanel.style.opacity = '1';
+                        detailPanel.style.transform = 'translateX(0)';
+                    }, 300);
+                });
+            });
+            
+            // Apply detected language
+            updateUI();
+            
+            // Delay the detail panel update to ensure DOM is ready
+            setTimeout(() => {
+                updateDetailPanel(2);
+            }, 100);
+            
+            // Update button styles based on detected language
+            document.querySelectorAll('button[onclick^="switchLanguage"]').forEach(btn => {
+                if (btn.onclick.toString().includes(`'${currentLanguage}'`)) {
+                    btn.style.background = '#3B82F6';
+                    btn.style.color = 'white';
+                    btn.style.border = 'none';
+                } else {
+                    btn.style.background = '#1A1A1A';
+                    btn.style.color = '#71717A';
+                    btn.style.border = '1px solid #334155';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
